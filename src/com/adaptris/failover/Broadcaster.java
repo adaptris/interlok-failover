@@ -51,6 +51,13 @@ public class Broadcaster {
   
   public void stop() {
     this.schedulerHandle.cancel(true);
+    if(socket != null) {
+      try {
+        socket.close();
+      } catch (Exception ex) {
+        ;
+      }
+    }
   }
 
   public String getGroup() {
