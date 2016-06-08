@@ -1,7 +1,6 @@
 package com.adaptris.failover;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.concurrent.Executors;
@@ -9,7 +8,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.adaptris.failover.util.PacketHelper;
+
 public class Broadcaster {
+  
+  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
   private static final int DEFAULT_SEND_DELAY_SECONDS = 3;
   
@@ -17,14 +23,13 @@ public class Broadcaster {
   private ScheduledFuture<?> schedulerHandle;
   private MulticastSocket socket;
   private String group;
-  private short port;
-  private DatagramPacket packet;
+  private int port;
+  private Ping pingData;
   private int sendDelaySeconds;
   
-  public Broadcaster(final String group, final short port, DatagramPacket packet) {
+  public Broadcaster(final String group, final int port) {
     this.setGroup(group);
     this.setPort(port);
-    this.setPacket(packet);
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
   }
   
@@ -39,14 +44,15 @@ public class Broadcaster {
       @Override
       public void run() {
         try {
-          socket.send(getPacket());
+          log.trace("Sending ping to all online instances");
+          socket.send(PacketHelper.createDatagramPacket(getPingData(), group, port));
         } catch (Exception e) {
           e.printStackTrace();
         }
       }
     };
     
-    this.schedulerHandle = this.scheduler.schedule(broadcastRunnable, this.getSendDelaySeconds(), TimeUnit.SECONDS);
+    this.schedulerHandle = this.scheduler.scheduleWithFixedDelay(broadcastRunnable, this.getSendDelaySeconds(), this.getSendDelaySeconds(), TimeUnit.SECONDS);
   }
   
   public void stop() {
@@ -68,20 +74,12 @@ public class Broadcaster {
     this.group = group;
   }
 
-  public short getPort() {
+  public int getPort() {
     return port;
   }
 
-  public void setPort(short port) {
+  public void setPort(int port) {
     this.port = port;
-  }
-
-  public DatagramPacket getPacket() {
-    return packet;
-  }
-
-  public void setPacket(DatagramPacket packet) {
-    this.packet = packet;
   }
 
   public int getSendDelaySeconds() {
@@ -90,6 +88,14 @@ public class Broadcaster {
 
   public void setSendDelaySeconds(int sendDelaySeconds) {
     this.sendDelaySeconds = sendDelaySeconds;
+  }
+
+  public Ping getPingData() {
+    return pingData;
+  }
+
+  public void setPingData(Ping pingData) {
+    this.pingData = pingData;
   }
 
 }

@@ -11,6 +11,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.util.PacketHelper;
+
 public class Listener implements PingEventSender{
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
@@ -18,10 +20,10 @@ public class Listener implements PingEventSender{
   private List<PingEventListener> listeners;
   private MulticastSocket socket;
   private String group;
-  private Short port;
-  private boolean shutdownRequested;
+  private int port;
+  private volatile boolean shutdownRequested;
   
-  public Listener(final String group, final short port) {
+  public Listener(final String group, final int port) {
     this.setGroup(group);
     this.setPort(port);
     
@@ -33,37 +35,43 @@ public class Listener implements PingEventSender{
     try {
       socket = new MulticastSocket(this.getPort());
       socket.setReuseAddress(true);
+      socket.setSoTimeout(30000);
       socket.joinGroup(InetAddress.getByName(this.getGroup()));
       
-      final byte[] udpPacket = new byte[PacketHelper.STANDARD_PACKET_SIZE];
-      while (!shutdownRequested) {
-        try {
-          final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
-          socket.receive(packet);
-          
-          this.sendPingEvent(packet);
-          
-        } catch (SocketTimeoutException e) {
-          log.error(e.getMessage(), e);
-        } catch (final IOException e) {
-          log.error(e.getMessage(), e);
+      (new Thread("Listener Thread") {
+        public void run() {
+          final byte[] udpPacket = new byte[PacketHelper.STANDARD_PACKET_SIZE];
+          while (!shutdownRequested) {
+            try {
+              final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
+              socket.receive(packet);
+              
+              log.trace("Receiving ping.");
+              sendPingEvent(packet);
+              
+            } catch (SocketTimeoutException e) {
+              
+            } catch (final IOException e) {
+              log.error(e.getMessage(), e);
+            }
+          }
         }
-      }
+      }).start();
+      
     } catch (IOException ex) {
       ex.printStackTrace();
-    } finally {
-      if(socket != null) {
-        try {
-          socket.close();
-        } catch (Exception ex) {
-          ;
-        }
-      }
     }
   }
   
   public void stop() {
     this.shutdownRequested = true;
+    if(socket != null) {
+      try {
+        socket.close();
+      } catch (Exception ex) {
+        ;
+      }
+    }
   }
 
   private void sendPingEvent(DatagramPacket packet) {
@@ -82,11 +90,11 @@ public class Listener implements PingEventSender{
     this.group = group;
   }
 
-  public Short getPort() {
+  public int getPort() {
     return port;
   }
 
-  public void setPort(Short port) {
+  public void setPort(int port) {
     this.port = port;
   }
 

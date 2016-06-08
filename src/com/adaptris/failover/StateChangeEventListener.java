@@ -4,6 +4,6 @@ public interface StateChangeEventListener {
 
   public void promoteToMaster();
   
-  public void promoteSlave();
+  public void promoteSlave(int position);
   
 }

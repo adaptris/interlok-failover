@@ -1,8 +1,14 @@
 package com.adaptris.failover;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 
+import com.adaptris.failover.util.Constants;
+
 public class OnlineInstance {
+  
+  private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
   
   private UUID id;
   
@@ -54,6 +60,21 @@ public class OnlineInstance {
 
   public void setSlaveNumber(int slaveNumber) {
     this.slaveNumber = slaveNumber;
+  }
+  
+  public String toString() {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("ID: " + this.getId().toString());
+    stringBuilder.append("\n");
+    if(this.getInstanceType() == Constants.MASTER)
+      stringBuilder.append("Type: Master");
+    else
+      stringBuilder.append("TYPE: Slave");
+    stringBuilder.append("\n");
+    stringBuilder.append("Last Contact: " + sdf.format(new Date(this.getLastContact())));
+    stringBuilder.append("\n");
+    
+    return stringBuilder.toString();
   }
 
 }
