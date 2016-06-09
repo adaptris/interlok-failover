@@ -68,8 +68,11 @@ public class OnlineInstance {
     stringBuilder.append("\n");
     if(this.getInstanceType() == Constants.MASTER)
       stringBuilder.append("Type: Master");
-    else
-      stringBuilder.append("TYPE: Slave");
+    else {
+      stringBuilder.append("Type: Slave");
+      stringBuilder.append("\n");
+      stringBuilder.append("Slave position: " + this.getSlaveNumber());
+    }
     stringBuilder.append("\n");
     stringBuilder.append("Last Contact: " + sdf.format(new Date(this.getLastContact())));
     stringBuilder.append("\n");
