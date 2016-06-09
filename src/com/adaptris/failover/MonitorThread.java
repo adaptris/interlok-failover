@@ -46,6 +46,7 @@ public class MonitorThread {
   
   public void stop() {
     instanceHandle.cancel(true);
+    scheduler.shutdownNow();
   }
 
   public int getPollingSeconds() {
