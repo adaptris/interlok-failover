@@ -44,7 +44,6 @@ public class Broadcaster {
       @Override
       public void run() {
         try {
-          log.trace("Sending ping to all online instances");
           socket.send(PacketHelper.createDatagramPacket(getPingData(), group, port));
         } catch (Exception e) {
           e.printStackTrace();

@@ -43,9 +43,7 @@ public class Listener implements PingEventSender{
               final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
               socket.receive(packet);
               
-              log.trace("Receiving ping.");
-              sendPingEvent(packet);
-              
+              sendPingEvent(packet);              
             } catch (SocketTimeoutException e) {
               
             } catch (final IOException e) {
