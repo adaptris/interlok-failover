@@ -5,10 +5,17 @@ import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
 
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FailoverMasterBootstrap extends FailoverBootstrap {
+  
+  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
   @Override
   protected void startFailover(Properties bootstrapProperties) {
+    log.info("Starting Interlok instance as in failover mode as the master.");
+    
     broadcaster = new Broadcaster(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
     listener = new Listener(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
     
