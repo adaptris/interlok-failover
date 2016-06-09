@@ -33,6 +33,9 @@ public class FailoverSlaveBootstrap extends FailoverBootstrap {
     try {
       failoverManager.registerListener(this);
       failoverManager.start();
+      
+      AdapterEventListener.createInstance(failoverManager);
+      
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);

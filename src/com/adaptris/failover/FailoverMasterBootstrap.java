@@ -24,6 +24,8 @@ public class FailoverMasterBootstrap extends FailoverBootstrap {
       failoverManager.registerListener(this);
       failoverManager.start();
       
+      AdapterEventListener.createInstance(failoverManager);
+      
       promoteToMaster();
     } catch (Exception e) {
       e.printStackTrace();
