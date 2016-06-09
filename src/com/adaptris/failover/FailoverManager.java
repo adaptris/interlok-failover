@@ -71,19 +71,39 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       if(!this.assignSlaveNumber()) { // if we don't have to assign slave numbers continue, otherwise assign and wait for next poll.
         checkPromotion();
       }
+      
+      purgeOldSlaveInstances();
+      
       StringBuilder sb = new StringBuilder();
-      
-      sb.append("My slave instance:");
-      sb.append(myInstance.toString());
-      sb.append("\nOther online instances:\n");
-      
-      for(OnlineInstance instance : instances)
-        sb.append(instance.toString());
-      
+      sb.append("\nMy instance:\n");
+      sb.append(myInstance);
+      if(myInstance.getInstanceType() == SLAVE) {
+        sb.append("\nCurrent master instance:\n");
+        if(currentMaster == null)
+          sb.append("Null.\n");
+        else
+          sb.append(currentMaster);
+      }
+      sb.append("\nOther online slave instances:\n");
+      if(instances.size() == 0)
+        sb.append("None.\n");
+      else {
+        for(OnlineInstance instance : instances)
+          sb.append(instance);
+      }
       log.trace(sb.toString());
     }
   }
   
+  private void purgeOldSlaveInstances() {
+    for(int counter = instances.size() - 1; counter >= 0; counter --) {
+      if(timedOut(instances.get(counter).getLastContact())) {
+        log.info("Removing timed out slave: " + instances.get(counter).getId().toString());
+        instances.remove(counter);
+      }
+    }
+  }
+
   private void checkPromotion() {
     if(myInstance.getSlaveNumber() == 1) {
       if(masterNotAvailable()) {
@@ -91,6 +111,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
         myInstance.setInstanceType(MASTER);
         myOutgoingPing.setInstanceType(MASTER);
         myOutgoingPing.setSlaveNumber(0);
+        this.broadcaster.setPingData(myOutgoingPing);
         currentMaster = myInstance;
         
         listener.stop();
@@ -118,18 +139,22 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       }
     }
     if(slaveInstance != null) {
-      return (slaveInstance.getLastContact() < (System.currentTimeMillis() - (this.getInstanceTimeoutSeconds() * 1000))); 
-    }
-    return false;
+      return timedOut(slaveInstance.getLastContact()); 
+    } else 
+      return true; // we can't find this slave, it may have been purged.
   }
 
   private boolean masterNotAvailable() {
     if(currentMaster == null)
       return true;
     else
-      return (currentMaster.getLastContact() < (System.currentTimeMillis() - (this.getInstanceTimeoutSeconds() * 1000)));
+      return timedOut(currentMaster.getLastContact());
   }
 
+  private boolean timedOut(long lastContact) {
+    return (lastContact < (System.currentTimeMillis() - (this.getInstanceTimeoutSeconds() * 1000)));
+  }
+  
   private boolean assignSlaveNumber() {
     boolean needToAssignNumbers = false;
     
@@ -138,8 +163,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     
     if(!needToAssignNumbers) {
       for(OnlineInstance instance : instances) {
-        if(instance.getSlaveNumber() == 0)
+        // if any instances do not have a slave number, or if it is the same as ours, lets re-assign.
+        if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == myInstance.getSlaveNumber()) {
           needToAssignNumbers = true;
+          break;
+        }
       }
     }
     
@@ -154,7 +182,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       Arrays.sort(instanceIds);
       for(int counter = 0; counter < instanceIds.length; counter ++) {
         if(instanceIds[counter].equals(myInstance.getId().toString())) {
-          log.info("Assigning myself slave position " + counter + 1);
+          log.info("Assigning myself slave position " + (counter + 1));
           myInstance.setSlaveNumber(counter + 1);
           myOutgoingPing.setSlaveNumber(counter + 1);
           this.broadcaster.setPingData(myOutgoingPing);
@@ -189,16 +217,9 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are master
         handleMasterConflict();
     } else {
-      if(currentMaster == null) {
-        currentMaster = new OnlineInstance(ping.getInstanceId());
-        currentMaster.setInstanceType(MASTER);
-      }
+      currentMaster.setInstanceType(MASTER);
       currentMaster.setLastContact(System.currentTimeMillis());
-      
-      if(!instances.contains(currentMaster))
-        instances.add(currentMaster);
-      else
-        instances.get(instances.indexOf(currentMaster)).setLastContact(System.currentTimeMillis());
+      currentMaster.setSlaveNumber(ping.getSlaveNumber());
     }
   }
 
