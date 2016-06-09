@@ -47,7 +47,6 @@ public abstract class FailoverBootstrap implements StateChangeEventListener {
   public void promoteToMaster() {
     try {
       log.info("Promoting to MASTER");
-      listener.stop();
       new SimpleBootstrap(new String[] {bootstrapResource}).boot();
     } catch (Exception e) {
       e.printStackTrace();

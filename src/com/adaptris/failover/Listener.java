@@ -33,10 +33,7 @@ public class Listener implements PingEventSender{
   
   public void start() {
     try {
-      socket = new MulticastSocket(this.getPort());
-      socket.setReuseAddress(true);
-      socket.setSoTimeout(30000);
-      socket.joinGroup(InetAddress.getByName(this.getGroup()));
+      socketConnect();
       
       (new Thread("Listener Thread") {
         public void run() {
@@ -52,7 +49,14 @@ public class Listener implements PingEventSender{
             } catch (SocketTimeoutException e) {
               
             } catch (final IOException e) {
-              log.error(e.getMessage(), e);
+              if(!shutdownRequested) {
+                log.error(e.getMessage(), e);
+                try {
+                  Thread.sleep(5000);
+                  socketConnect();
+                } catch (Exception e1) {
+                }
+              }
             }
           }
         }
@@ -60,9 +64,17 @@ public class Listener implements PingEventSender{
       
     } catch (IOException ex) {
       ex.printStackTrace();
+      log.error("Error with the Multicast Listener, cannot start it up.");
     }
   }
   
+  private void socketConnect() throws IOException {
+    socket = new MulticastSocket(this.getPort());
+    socket.setReuseAddress(true);
+    socket.setSoTimeout(30000);
+    socket.joinGroup(InetAddress.getByName(this.getGroup()));
+  }
+
   public void stop() {
     this.shutdownRequested = true;
     if(socket != null) {

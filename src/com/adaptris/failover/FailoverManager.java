@@ -92,6 +92,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
         myOutgoingPing.setInstanceType(MASTER);
         myOutgoingPing.setSlaveNumber(0);
         currentMaster = myInstance;
+        
+        listener.stop();
+        pollingThread.stop();
+        
         this.notifyPromoteToMaster();
       }
     } else { // do we need to promote this slave?
