@@ -74,27 +74,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       
       purgeOldSlaveInstances();
       
-      StringBuilder sb = new StringBuilder();
-      sb.append("\nMy instance:\n");
-      sb.append(myInstance);
-      if(myInstance.getInstanceType() == SLAVE) {
-        sb.append("\nCurrent master instance:\n");
-        if(currentMaster == null)
-          sb.append("Null.\n");
-        else
-          sb.append(currentMaster);
-      }
-      sb.append("\nOther online slave instances:\n");
-      if(instances.size() == 0)
-        sb.append("None.\n");
-      else {
-        for(OnlineInstance instance : instances)
-          sb.append(instance);
-      }
-      log.trace(sb.toString());
+      logState();
     }
   }
-  
+
   private void purgeOldSlaveInstances() {
     for(int counter = instances.size() - 1; counter >= 0; counter --) {
       if(timedOut(instances.get(counter).getLastContact())) {
@@ -195,17 +178,21 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   public void start() throws Exception {
-    this.listener.start();
-    Thread.sleep(5000);
+    if(myInstance.getInstanceType() == SLAVE) { // no need for a listener if we are master
+      this.listener.start();
+      Thread.sleep(5000);
+      this.pollingThread.start();
+    }
     this.broadcaster.setPingData(myOutgoingPing);
     this.broadcaster.start();
-    this.pollingThread.start();
   }
   
   public void stop() {
     this.broadcaster.stop();
-    this.listener.stop();
-    this.pollingThread.stop();
+    if(myInstance.getInstanceType() == SLAVE) {
+      this.listener.stop();
+      this.pollingThread.stop();
+    }
   }
 
   @Override
@@ -254,6 +241,27 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   private void handleMasterConflict() {
     log.info("Another instance is already master, shutting down");
     System.exit(1);
+  }
+  
+  private void logState() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("\nMy instance:\n");
+    sb.append(myInstance);
+    if(myInstance.getInstanceType() == SLAVE) {
+      sb.append("\nCurrent master instance:\n");
+      if(currentMaster == null)
+        sb.append("Null.\n");
+      else
+        sb.append(currentMaster);
+    }
+    sb.append("\nOther online slave instances:\n");
+    if(instances.size() == 0)
+      sb.append("None.\n");
+    else {
+      for(OnlineInstance instance : instances)
+        sb.append(instance);
+    }
+    log.trace(sb.toString());
   }
   
   @Override
