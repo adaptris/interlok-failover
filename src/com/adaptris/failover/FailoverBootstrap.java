@@ -1,5 +1,9 @@
 package com.adaptris.failover;
 
+import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_PING_INTERVAL_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
+
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -26,6 +30,12 @@ public abstract class FailoverBootstrap implements StateChangeEventListener {
       bootstrapResource = bootstrapPropertiesResource;
       Properties bootstrapProperties = PropertiesHelper.loadFromFile(bootstrapPropertiesResource);
       
+      broadcaster = new Broadcaster(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
+      listener = new Listener(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
+      
+      if(bootstrapProperties.containsKey(FAILOVER_PING_INTERVAL_KEY))
+        broadcaster.setSendDelaySeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PING_INTERVAL_KEY)));
+      
       Runtime.getRuntime().addShutdownHook(new ShutdownHandler());
       
       startFailover(bootstrapProperties);
@@ -38,11 +48,7 @@ public abstract class FailoverBootstrap implements StateChangeEventListener {
 
   protected abstract void startFailover(Properties bootstrapProperties);
   
-  protected void stopFailover() {
-    System.out.println("Stopping");
-    broadcaster.stop();
-    listener.stop();
-  }
+  protected abstract void stopFailover();
   
   public void promoteToMaster() {
     try {

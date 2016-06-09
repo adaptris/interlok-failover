@@ -12,4 +12,8 @@ public class Constants {
   
   public static final String FAILOVER_SLAVE_NUMBER_KEY = "failover.slave.position";
   
+  public static final String FAILOVER_PING_INTERVAL_KEY = "failover.ping.interval.seconds";
+  
+  public static final String FAILOVER_INSTANCE_TIMEOUT_KEY = "failover.instance.timeout.seconds";
+  
 }
