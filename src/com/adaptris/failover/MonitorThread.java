@@ -3,6 +3,7 @@ package com.adaptris.failover;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class MonitorThread {
@@ -18,7 +19,12 @@ public class MonitorThread {
   private int pollingSeconds;
 
   public MonitorThread(Triggerable triggerable) {
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable runnable) {
+        return new Thread(runnable, "Failover Monitor Thread");
+      }
+    });
     pollingSeconds = DEFAULT_POLL_SECONDS;
     this.triggerable = triggerable;
   }

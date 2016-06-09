@@ -6,6 +6,7 @@ import java.net.MulticastSocket;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -38,7 +39,12 @@ public class Broadcaster {
     socket.joinGroup(InetAddress.getByName(this.getGroup()));
     socket.setTimeToLive((byte) 1); // 1 byte ttl for subnet only
     
-    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable runnable) {
+        return new Thread(runnable, "Broadcast Thread");
+      }
+    });
     
     final Runnable broadcastRunnable = new Runnable() {
       @Override
