@@ -188,6 +188,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
   
   public void stop() {
+    log.info("Interlok instance stopped, destroying instance.");
     this.broadcaster.stop();
     if(myInstance.getInstanceType() == SLAVE) {
       this.listener.stop();

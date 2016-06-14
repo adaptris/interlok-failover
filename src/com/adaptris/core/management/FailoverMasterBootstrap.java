@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.adaptris.failover.AdapterEventListener;
 import com.adaptris.failover.FailoverManager;
 
-public class FailoverMasterBootstrap extends FailoverBootstrap {
+public class FailoverMasterBootstrap extends FailoverBootstrapImp {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
