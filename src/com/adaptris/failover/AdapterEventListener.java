@@ -3,7 +3,7 @@ package com.adaptris.failover;
 public class AdapterEventListener {
   
   private static AdapterEventListener instance;
-  
+    
   private FailoverManager failoverManager;
   
   private AdapterEventListener(FailoverManager failoverManager) {

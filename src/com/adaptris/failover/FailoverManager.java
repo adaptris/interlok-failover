@@ -193,6 +193,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       this.listener.stop();
       this.pollingThread.stop();
     }
+    notifyAdapterStopped();
   }
 
   @Override
@@ -284,6 +285,12 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       changeEventListener.promoteSlave(myInstance.getSlaveNumber());
   }
 
+  @Override
+  public void notifyAdapterStopped() {
+    for(StateChangeEventListener changeEventListener : this.listeners)
+      changeEventListener.adapterStopped();
+  }
+  
   @Override
   public void registerListener(StateChangeEventListener listener) {
     listeners.add(listener);

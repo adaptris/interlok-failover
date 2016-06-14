@@ -6,4 +6,6 @@ public interface StateChangeEventListener {
   
   public void promoteSlave(int position);
   
+  public void adapterStopped();
+  
 }
