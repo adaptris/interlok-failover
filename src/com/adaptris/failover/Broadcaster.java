@@ -61,8 +61,10 @@ public class Broadcaster {
   }
   
   public void stop() {
-    this.schedulerHandle.cancel(true);
-    scheduler.shutdownNow();
+    if(schedulerHandle != null) {
+      this.schedulerHandle.cancel(true);
+      scheduler.shutdownNow();
+    }
     if(socket != null) {
       try {
         socket.close();

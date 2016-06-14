@@ -71,11 +71,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       if(!this.assignSlaveNumber()) { // if we don't have to assign slave numbers continue, otherwise assign and wait for next poll.
         checkPromotion();
       }
-      
-      purgeOldSlaveInstances();
-      
-      logState();
     }
+    purgeOldSlaveInstances();
+    
+    logState();
   }
 
   private void purgeOldSlaveInstances() {
@@ -95,10 +94,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
         myOutgoingPing.setInstanceType(MASTER);
         myOutgoingPing.setSlaveNumber(0);
         this.broadcaster.setPingData(myOutgoingPing);
+        myInstance.setSlaveNumber(0);
         currentMaster = myInstance;
         
-        listener.stop();
-        pollingThread.stop();
+//        listener.stop();
+//        pollingThread.stop();
         
         this.notifyPromoteToMaster();
       }
@@ -178,11 +178,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   public void start() throws Exception {
-    if(myInstance.getInstanceType() == SLAVE) { // no need for a listener if we are master
-      this.listener.start();
-      Thread.sleep(5000);
-      this.pollingThread.start();
-    }
+//    if(myInstance.getInstanceType() == SLAVE) { // no need for a listener if we are master
+    this.listener.start();
+    Thread.sleep(5000);
+    this.pollingThread.start();
+//    }
     this.broadcaster.setPingData(myOutgoingPing);
     this.broadcaster.start();
   }
@@ -190,10 +190,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   public void stop() {
     log.info("Interlok instance stopped, destroying instance.");
     this.broadcaster.stop();
-    if(myInstance.getInstanceType() == SLAVE) {
-      this.listener.stop();
-      this.pollingThread.stop();
-    }
+//    if(myInstance.getInstanceType() == SLAVE) {
+    this.listener.stop();
+    this.pollingThread.stop();
+//    }
     notifyAdapterStopped();
   }
 
