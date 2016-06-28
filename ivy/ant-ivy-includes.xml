@@ -478,7 +478,7 @@
                  We sign in backwards compatibility mode because of jms-jmx (which could be deployed in a v2).
              Use http://tsa.starfieldtech.com or https://timestamp.geotrust.com/tsa as the TSAURL.
             -->
-            <signjar jar="@{jarfile}" alias="${code-signing.alias}" keystore="${code-signing.keystore}" storepass="${code-signing.storepass}" keypass="${code-signing.keypass}" sigalg="MD5withRSA" digestalg="SHA1" tsaurl="@{tsaurl}">
+            <signjar jar="@{jarfile}" alias="${code-signing.alias}" keystore="${code-signing.keystore}" storepass="${code-signing.storepass}" keypass="${code-signing.keypass}" sigalg="MD5withRSA" digestalg="SHA256withRSA" tsaurl="@{tsaurl}">
             </signjar>
           </then>
         </if>
