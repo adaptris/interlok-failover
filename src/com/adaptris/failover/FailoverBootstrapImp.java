@@ -1,4 +1,4 @@
-package com.adaptris.core.management;
+package com.adaptris.failover;
 
 import static com.adaptris.core.management.Constants.CFG_KEY_START_QUIETLY;
 import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
@@ -10,12 +10,15 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.core.management.BootstrapProperties;
+import com.adaptris.core.management.ClasspathInitialiser;
+import com.adaptris.core.management.ShutdownHandler;
+import com.adaptris.core.management.SystemPropertiesUtil;
+import com.adaptris.core.management.UnifiedBootstrap;
+import com.adaptris.core.management.VersionReport;
 import com.adaptris.core.management.logging.LoggingConfigurator;
 import com.adaptris.core.runtime.AdapterManagerMBean;
 import com.adaptris.core.util.ManagedThreadFactory;
-import com.adaptris.failover.Broadcaster;
-import com.adaptris.failover.Listener;
-import com.adaptris.failover.StateChangeEventListener;
 import com.adaptris.failover.util.PropertiesHelper;
 
 public abstract class FailoverBootstrapImp implements StateChangeEventListener {
