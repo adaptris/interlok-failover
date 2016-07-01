@@ -457,13 +457,12 @@
             <isset property="code-signing.storepass"/>
           </and>
           <then>
-            <!-- We could specify the digestalg / sigalg to backwards compatibility as JDK7 only comes with
-                 SHA256 and SHA256withRSA and if we were to deploy on JRE1.6...
+            <!-- We could specify the digestalg / sigalg to backwards compatibility as JDK7+ comes with
+                 SHA-256 and SHA256withRSA and if we were to deploy on JRE1.6...
                  e.g. sigalg="MD5withRSA" digestalg="SHA1"
-                 We sign in backwards compatibility mode because of jms-jmx (which could be deployed in a v2).
              Use http://tsa.starfieldtech.com or https://timestamp.geotrust.com/tsa as the TSAURL.
             -->
-            <signjar jar="@{jarfile}" alias="${code-signing.alias}" keystore="${code-signing.keystore}" storepass="${code-signing.storepass}" keypass="${code-signing.keypass}" sigalg="MD5withRSA" digestalg="SHA1" tsaurl="@{tsaurl}">
+            <signjar jar="@{jarfile}" alias="${code-signing.alias}" keystore="${code-signing.keystore}" storepass="${code-signing.storepass}" keypass="${code-signing.keypass}" sigalg="SHA256withRSA" digestalg="SHA-256" tsaurl="@{tsaurl}">
             </signjar>
           </then>
         </if>
