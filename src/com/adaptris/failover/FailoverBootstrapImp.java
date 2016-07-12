@@ -32,11 +32,13 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   protected Listener listener;
   
   private String bootstrapResource;
+  
+  private volatile boolean isRunning;
 
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
   protected static void doUsage() {
-    System.out.println("Only one mandatory parameter is required for the failover bootstrap; the url to the bootstrap.properties");
+    System.out.println("Only one mandatory parameter is required for the failover bootstrap; the name of the bootstrap.properties file on the classpath.");
   }
 
   protected void doBootstrap(String bootstrapPropertiesResource) {
@@ -56,6 +58,8 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
       
       startFailover(bootstrapProperties);
       
+      isRunning = true;
+      
     } catch (Exception e) {
       System.out.println("Failed to load bootstrap.properties from '" + bootstrapPropertiesResource + "'");
       e.printStackTrace();
@@ -68,12 +72,15 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   
   @Override
   public void adapterStopped() {
-    if(adapterMBean != null) {
-      try {
-        bootProperties.getConfigManager().getAdapterRegistry().destroyAdapter(adapterMBean);
-      } catch (Exception e) {
-        log.error("Attempting to destory adapter failed.");
-        log.error(e.getMessage());
+    if(isRunning) {
+      if(adapterMBean != null) {
+        try {
+          isRunning = false;
+          bootProperties.getConfigManager().getAdapterRegistry().destroyAdapter(adapterMBean);
+        } catch (Exception e) {
+          log.error("Attempting to destory adapter failed.");
+          log.error(e.getMessage());
+        }
       }
     }
   }
@@ -99,12 +106,13 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   
   public class FailoverShutdownHandler extends Thread {
     public void run() {
+      isRunning = false;
       stopFailover();
     }
   }
   
   private void doStandardBoot() throws Exception {
-    ClasspathInitialiser.init(null, true);
+    ClasspathInitialiser.init(null, false);
     
     VersionReport r = VersionReport.getInstance();
     log.info(String.format("Bootstrap of Interlok %1$s complete", r.getAdapterBuildVersion()));
