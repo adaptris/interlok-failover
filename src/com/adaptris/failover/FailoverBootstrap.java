@@ -44,7 +44,7 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
   
   protected void stopFailover() {
     if(failoverManager != null)
-      failoverManager.stop();
+      failoverManager.stopFailoverManager();
   }
   
   public static final void main(String[] arguments) {
