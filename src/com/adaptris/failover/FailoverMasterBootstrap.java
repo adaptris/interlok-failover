@@ -1,4 +1,4 @@
-package com.adaptris.core.management;
+package com.adaptris.failover;
 
 import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY;
 
@@ -6,9 +6,6 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.adaptris.failover.AdapterEventListener;
-import com.adaptris.failover.FailoverManager;
 
 public class FailoverMasterBootstrap extends FailoverBootstrapImp {
   

@@ -1,4 +1,4 @@
-package com.adaptris.core.management;
+package com.adaptris.failover;
 
 import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_SLAVE_NUMBER_KEY;
@@ -8,9 +8,6 @@ import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.adaptris.failover.AdapterEventListener;
-import com.adaptris.failover.FailoverManager;
 
 public class FailoverBootstrap extends FailoverBootstrapImp {
   
@@ -47,7 +44,7 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
   
   protected void stopFailover() {
     if(failoverManager != null)
-      failoverManager.stop();
+      failoverManager.stopFailoverManager();
   }
   
   public static final void main(String[] arguments) {
