@@ -91,7 +91,7 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
       
       boolean startQuietly = Boolean.valueOf(bootProperties.getProperty(CFG_KEY_START_QUIETLY, "true")).booleanValue();
       bootstrap.init(adapterMBean);
-      Runtime.getRuntime().addShutdownHook(new ShutdownHandler(bootProperties.getConfigManager().getAdapterRegistry()));
+      Runtime.getRuntime().addShutdownHook(new ShutdownHandler(bootProperties));
       launchAdapter(bootstrap, startQuietly);
       
     } catch (Exception e) {
