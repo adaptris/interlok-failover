@@ -1,4 +1,4 @@
-package com.adaptris.failover;
+package com.adaptris.failover.multicast;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,9 +12,10 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.Ping;
 import com.adaptris.failover.util.PacketHelper;
 
-public class Broadcaster {
+public class MulticastBroadcaster {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
@@ -28,7 +29,7 @@ public class Broadcaster {
   private Ping pingData;
   private int sendDelaySeconds;
   
-  public Broadcaster(final String group, final int port) {
+  public MulticastBroadcaster(final String group, final int port) {
     this.setGroup(group);
     this.setPort(port);
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);

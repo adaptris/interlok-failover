@@ -11,6 +11,9 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.multicast.MulticastBroadcaster;
+import com.adaptris.failover.multicast.MulticastListener;
+
 public class FailoverManager implements PingEventListener, StateChangeEventSender, Triggerable {
   
   private static final int DEFAULT_INSTANCE_TIMEOUT_SECONDS = 20;
@@ -18,8 +21,8 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
   private UUID uniqueId;
-  private Listener listener;
-  private Broadcaster broadcaster;
+  private MulticastListener listener;
+  private MulticastBroadcaster broadcaster;
   private List<StateChangeEventListener> listeners;
   private MonitorThread pollingThread;
   
@@ -31,7 +34,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private int instanceTimeoutSeconds;
   
-  public FailoverManager(Listener listener, Broadcaster broadcaster, boolean master, int slavePosition) {
+  public FailoverManager(MulticastListener listener, MulticastBroadcaster broadcaster, boolean master, int slavePosition) {
     this.listener = listener;
     this.listener.registerListener(this);
     

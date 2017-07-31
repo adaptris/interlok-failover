@@ -6,6 +6,8 @@ public class Constants {
   
   public static final int SLAVE = 2;
   
+  public static final String SOCKET_MODE = "failover.socket.mode";
+  
   public static final String FAILOVER_GROUP_KEY = "failover.multicast.group";
   
   public static final String FAILOVER_PORT_KEY = "failover.multicast.port";

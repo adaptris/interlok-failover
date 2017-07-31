@@ -1,4 +1,4 @@
-package com.adaptris.failover;
+package com.adaptris.failover.multicast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -11,9 +11,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.Ping;
+import com.adaptris.failover.PingEventListener;
+import com.adaptris.failover.PingEventSender;
 import com.adaptris.failover.util.PacketHelper;
 
-public class Listener implements PingEventSender{
+public class MulticastListener implements PingEventSender {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
@@ -23,7 +26,7 @@ public class Listener implements PingEventSender{
   private int port;
   private volatile boolean shutdownRequested;
   
-  public Listener(final String group, final int port) {
+  public MulticastListener(final String group, final int port) {
     this.setGroup(group);
     this.setPort(port);
     
