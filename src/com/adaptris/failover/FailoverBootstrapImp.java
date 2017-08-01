@@ -5,6 +5,8 @@ import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
 import static com.adaptris.failover.util.Constants.SOCKET_MODE;
 import static com.adaptris.failover.util.Constants.FAILOVER_PING_INTERVAL_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PEERS_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PORT_KEY;
 
 import java.util.Properties;
 
@@ -23,6 +25,8 @@ import com.adaptris.core.runtime.AdapterManagerMBean;
 import com.adaptris.core.util.ManagedThreadFactory;
 import com.adaptris.failover.multicast.MulticastBroadcaster;
 import com.adaptris.failover.multicast.MulticastListener;
+import com.adaptris.failover.tcp.TcpBroadcaster;
+import com.adaptris.failover.tcp.TcpListener;
 import com.adaptris.failover.util.PropertiesHelper;
 
 public abstract class FailoverBootstrapImp implements StateChangeEventListener {
@@ -34,8 +38,8 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   
   protected AdapterManagerMBean adapterMBean;
   
-  protected MulticastBroadcaster broadcaster;
-  protected MulticastListener listener;
+  protected Broadcaster broadcaster;
+  protected Listener listener;
   
   private String bootstrapResource;
   
@@ -57,8 +61,8 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
         broadcaster = new MulticastBroadcaster(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
         listener = new MulticastListener(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
       } else {
-        
-      
+        broadcaster = new TcpBroadcaster(bootstrapProperties.getProperty(FAILOVER_TCP_PEERS_KEY));
+        listener = new TcpListener(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_TCP_PORT_KEY)));
       }
       
       if(bootstrapProperties.containsKey(FAILOVER_PING_INTERVAL_KEY))

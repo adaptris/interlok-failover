@@ -11,12 +11,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.Listener;
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
-import com.adaptris.failover.PingEventSender;
 import com.adaptris.failover.util.PacketHelper;
 
-public class MulticastListener implements PingEventSender {
+public class MulticastListener implements Listener {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   

@@ -1,9 +1,8 @@
 package com.adaptris.failover.tcp;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,23 +10,21 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.Listener;
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
-import com.adaptris.failover.PingEventSender;
 import com.adaptris.failover.util.PacketHelper;
 
-public class TcpListener implements PingEventSender {
+public class TcpListener implements Listener {
 
 protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
   private List<PingEventListener> listeners;
-  private MulticastSocket socket;
-  private String group;
+  private ServerSocket socket;
   private int port;
   private volatile boolean shutdownRequested;
   
-  public TcpListener(final String group, final int port) {
-    this.setGroup(group);
+  public TcpListener(final int port) {
     this.setPort(port);
     
     shutdownRequested = false;
@@ -40,13 +37,9 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
       
       (new Thread("Listener Thread") {
         public void run() {
-          final byte[] udpPacket = new byte[PacketHelper.STANDARD_PACKET_SIZE];
           while (!shutdownRequested) {
             try {
-              final DatagramPacket packet = new DatagramPacket(udpPacket, udpPacket.length);
-              socket.receive(packet);
-              
-              sendPingEvent(packet);              
+              new ClientSocketHandlerThread(socket.accept()).start();              
             } catch (SocketTimeoutException e) {
               
             } catch (final IOException e) {
@@ -65,15 +58,13 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
       
     } catch (IOException ex) {
       ex.printStackTrace();
-      log.error("Error with the Multicast Listener, cannot start it up.");
+      log.error("Error with the TCP Listener, cannot start it up.");
     }
   }
   
   private void socketConnect() throws IOException {
-    socket = new MulticastSocket(this.getPort());
-    socket.setReuseAddress(true);
+    socket = new ServerSocket(this.getPort());
     socket.setSoTimeout(30000);
-    socket.joinGroup(InetAddress.getByName(this.getGroup()));
   }
 
   public void stop() {
@@ -87,20 +78,12 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
     }
   }
 
-  private void sendPingEvent(DatagramPacket packet) {
-    Ping pingRecord = PacketHelper.createPingRecord(packet);
+  private void sendPingEvent(byte[] data) {
+    Ping pingRecord = PacketHelper.createPingRecord(data);
     if(PacketHelper.isMasterPing(pingRecord))
       this.sendMasterPingEvent(pingRecord);
     else
       this.sendSlavePingEvent(pingRecord);
-  }
-
-  public String getGroup() {
-    return group;
-  }
-
-  public void setGroup(String group) {
-    this.group = group;
   }
 
   public int getPort() {
@@ -131,6 +114,33 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
   public void sendSlavePingEvent(Ping ping) {
     for(PingEventListener listener : this.listeners)
       listener.slavePinged(ping);
+  }
+  
+  class ClientSocketHandlerThread extends Thread {
+    
+    Socket clientSocket;
+    
+    ClientSocketHandlerThread(Socket clientSocket) {
+      super("Client Socket Handler");
+      this.clientSocket = clientSocket;
+    }
+
+    @Override
+    public void run() {
+      byte[] data = new byte[PacketHelper.STANDARD_PACKET_SIZE];
+      
+      try {
+        int byteCount = clientSocket.getInputStream().read(data);
+        if(byteCount != PacketHelper.STANDARD_PACKET_SIZE) {
+          log.warn("Incorrect packet size received on the TCP socket, ignoring this data stream.");
+        } else {
+          sendPingEvent(data);
+        }
+      } catch (IOException e) {
+        log.warn("Error reading the TCP socket data, ignoring this data stream.", e);
+      }
+    }
+    
   }
 
 }

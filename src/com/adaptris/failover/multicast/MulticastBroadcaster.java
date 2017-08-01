@@ -12,10 +12,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adaptris.failover.Broadcaster;
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.util.PacketHelper;
 
-public class MulticastBroadcaster {
+public class MulticastBroadcaster implements Broadcaster {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
   
