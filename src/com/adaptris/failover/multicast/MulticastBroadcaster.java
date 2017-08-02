@@ -1,8 +1,6 @@
 package com.adaptris.failover.multicast;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -13,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adaptris.failover.Broadcaster;
+import com.adaptris.failover.NetworkPingSender;
 import com.adaptris.failover.Ping;
-import com.adaptris.failover.util.PacketHelper;
 
 public class MulticastBroadcaster implements Broadcaster {
   
@@ -24,22 +22,26 @@ public class MulticastBroadcaster implements Broadcaster {
   
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> schedulerHandle;
-  private MulticastSocket socket;
+  
   private String group;
   private int port;
   private Ping pingData;
   private int sendDelaySeconds;
+  private NetworkPingSender networkPingSender;
   
   public MulticastBroadcaster(final String group, final int port) {
     this.setGroup(group);
     this.setPort(port);
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
+    this.setNetworkPingSender(new MulticastNetworkPingSender());
   }
   
   public void start() throws IOException {
-    socket = new MulticastSocket(this.getPort());
-    socket.joinGroup(InetAddress.getByName(this.getGroup()));
-    socket.setTimeToLive((byte) 1); // 1 byte ttl for subnet only
+    try {
+      this.getNetworkPingSender().initialize(getGroup(), getPort());
+    } catch (Exception e1) {
+      throw new IOException(e1);
+    }
     
     scheduler = Executors.newScheduledThreadPool(1, new ThreadFactory() {
       @Override
@@ -52,7 +54,7 @@ public class MulticastBroadcaster implements Broadcaster {
       @Override
       public void run() {
         try {
-          socket.send(PacketHelper.createDatagramPacket(getPingData(), group, port));
+          getNetworkPingSender().sendData(getGroup(), getPort(), getPingData());
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -67,13 +69,7 @@ public class MulticastBroadcaster implements Broadcaster {
       this.schedulerHandle.cancel(true);
       scheduler.shutdownNow();
     }
-    if(socket != null) {
-      try {
-        socket.close();
-      } catch (Exception ex) {
-        ;
-      }
-    }
+    this.getNetworkPingSender().Stop();
   }
 
   public String getGroup() {
@@ -106,6 +102,14 @@ public class MulticastBroadcaster implements Broadcaster {
 
   public void setPingData(Ping pingData) {
     this.pingData = pingData;
+  }
+
+  public NetworkPingSender getNetworkPingSender() {
+    return networkPingSender;
+  }
+
+  public void setNetworkPingSender(NetworkPingSender networkPingSender) {
+    this.networkPingSender = networkPingSender;
   }
 
 }

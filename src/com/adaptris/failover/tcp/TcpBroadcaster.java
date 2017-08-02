@@ -1,10 +1,6 @@
 package com.adaptris.failover.tcp;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -17,18 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adaptris.failover.Broadcaster;
+import com.adaptris.failover.NetworkPingSender;
 import com.adaptris.failover.Ping;
-import com.adaptris.failover.util.DirectTcpNetworkPingSender;
-import com.adaptris.failover.util.NetworkPingSender;
-import com.adaptris.failover.util.PacketHelper;
 
 public class TcpBroadcaster implements Broadcaster {
 
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
   private static final int DEFAULT_SEND_DELAY_SECONDS = 3;
-  
-  private static final int TIMEOUT_CONNECT = 10000;
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> schedulerHandle;
@@ -42,11 +34,11 @@ public class TcpBroadcaster implements Broadcaster {
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
     this.setPeers(new ArrayList<Peer>());
     this.setNetworkPingSender(new DirectTcpNetworkPingSender());
+    this.setPeersString(peers);
   }
 
   public void start() throws IOException {
     this.setPeers(decodePeers());
-    this.getNetworkPingSender().initialize(null, 0);
     
     scheduler = Executors.newScheduledThreadPool(1, new ThreadFactory() {
       @Override
@@ -59,22 +51,10 @@ public class TcpBroadcaster implements Broadcaster {
       @Override
       public void run() {
         for (Peer peer : getPeers()) {
-          Socket socket = null;
           try {
-            socket = new Socket();
-            socket.connect(peer, TIMEOUT_CONNECT);
-            
-            DataOutputStream outToServer = new DataOutputStream(socket.getOutputStream());
-            outToServer.write(PacketHelper.createDataPacket(getPingData()));
-
+            getNetworkPingSender().sendData(peer.getHost(), peer.getPort(), getPingData());
           } catch (Exception e) {
-            e.printStackTrace();
-          } finally {
-            try {
-              socket.close();
-            } catch (IOException e) {
-              // Silently
-            }
+            log.warn("Remote Peer not available, ignoring: " + peer.host + ":" + peer.getPort());
           }
         }
       }
@@ -108,6 +88,7 @@ public class TcpBroadcaster implements Broadcaster {
       this.schedulerHandle.cancel(true);
       scheduler.shutdownNow();
     }
+    this.getNetworkPingSender().Stop();
   }
 
   public int getSendDelaySeconds() {
