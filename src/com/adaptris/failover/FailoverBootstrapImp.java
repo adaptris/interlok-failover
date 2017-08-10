@@ -58,11 +58,11 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
       
       String socketMode = bootstrapProperties.getProperty(SOCKET_MODE);
       if((StringUtils.isEmpty(socketMode)) || (!socketMode.equalsIgnoreCase(SOCKET_MODE_TCP))) {
-        broadcaster = new MulticastBroadcaster(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
-        listener = new MulticastListener(bootstrapProperties.getProperty(FAILOVER_GROUP_KEY), Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PORT_KEY)));
+        broadcaster = new MulticastBroadcaster(this.getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY), Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
+        listener = new MulticastListener(this.getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY), Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
       } else {
-        broadcaster = new TcpBroadcaster(bootstrapProperties.getProperty(FAILOVER_TCP_PEERS_KEY));
-        listener = new TcpListener(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_TCP_PORT_KEY)));
+        broadcaster = new TcpBroadcaster(this.getPropertyValue(bootstrapProperties, FAILOVER_TCP_PEERS_KEY));
+        listener = new TcpListener(Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_TCP_PORT_KEY)));
       }
       
       if(bootstrapProperties.containsKey(FAILOVER_PING_INTERVAL_KEY))
@@ -85,6 +85,14 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   protected abstract void startFailover(Properties bootstrapProperties);
   
   protected abstract void stopFailover();
+  
+  private String getPropertyValue(Properties properties, String key) {
+    String propertyValue = System.getProperty(key);
+    if(propertyValue == null) {
+      return properties.getProperty(key);
+    }
+    return propertyValue;
+  }
   
   @Override
   public void adapterStopped() {
