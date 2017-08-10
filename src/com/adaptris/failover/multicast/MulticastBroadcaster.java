@@ -56,7 +56,7 @@ public class MulticastBroadcaster implements Broadcaster {
         try {
           getNetworkPingSender().sendData(getGroup(), getPort(), getPingData());
         } catch (Exception e) {
-          e.printStackTrace();
+          log.warn("Could not send ping data, will try again.", e);
         }
       }
     };

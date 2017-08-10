@@ -15,6 +15,7 @@ import com.adaptris.failover.Listener;
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
 import com.adaptris.failover.util.PacketHelper;
+import com.adaptris.failover.util.SocketFactory;
 
 public class MulticastListener implements Listener {
   
@@ -24,6 +25,7 @@ public class MulticastListener implements Listener {
   private MulticastSocket socket;
   private String group;
   private int port;
+  private SocketFactory socketFactory;
   private volatile boolean shutdownRequested;
   
   public MulticastListener(final String group, final int port) {
@@ -32,9 +34,10 @@ public class MulticastListener implements Listener {
     
     shutdownRequested = false;
     listeners = new ArrayList<PingEventListener>();
+    this.setSocketFactory(new SocketFactory());
   }
   
-  public void start() {
+  public void start() throws IOException {
     try {
       socketConnect();
       
@@ -64,13 +67,13 @@ public class MulticastListener implements Listener {
       }).start();
       
     } catch (IOException ex) {
-      ex.printStackTrace();
       log.error("Error with the Multicast Listener, cannot start it up.");
+      throw ex;
     }
   }
   
   private void socketConnect() throws IOException {
-    socket = new MulticastSocket(this.getPort());
+    socket = this.getSocketFactory().createMulticastSocket(this.getPort());
     socket.setReuseAddress(true);
     socket.setSoTimeout(30000);
     socket.joinGroup(InetAddress.getByName(this.getGroup()));
@@ -131,6 +134,14 @@ public class MulticastListener implements Listener {
   public void sendSlavePingEvent(Ping ping) {
     for(PingEventListener listener : this.listeners)
       listener.slavePinged(ping);
+  }
+
+  public SocketFactory getSocketFactory() {
+    return socketFactory;
+  }
+
+  public void setSocketFactory(SocketFactory socketFactory) {
+    this.socketFactory = socketFactory;
   }
 
 }

@@ -31,6 +31,8 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private int instanceTimeoutSeconds;
   
+  private MultiMasterConflictHandler multiMasterConflictHandler;
+  
   public FailoverManager(Listener listener, Broadcaster broadcaster, boolean master, int slavePosition) {
     this.listener = listener;
     this.listener.registerListener(this);
@@ -41,25 +43,26 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     
     instanceTimeoutSeconds = DEFAULT_INSTANCE_TIMEOUT_SECONDS;
     
-    pollingThread = new MonitorThread(this);
+    this.setPollingThread(new MonitorThread(this));
+    this.setMultiMasterConflictHandler(new ExitMultiMasterConflictHandler());
     
     listeners = new ArrayList<StateChangeEventListener>();
-    instances = new ArrayList<>();
+    this.setInstances(new ArrayList<OnlineInstance>());
     
     myOutgoingPing = new Ping();
     myOutgoingPing.setInstanceId(getUniqueId());
     if(master) {
-      currentMaster = new OnlineInstance(this.getUniqueId());
-      currentMaster.setInstanceType(MASTER);
-      myInstance = currentMaster;
+      this.setCurrentMaster(new OnlineInstance(this.getUniqueId()));
+      this.getCurrentMaster().setInstanceType(MASTER);
+      this.setMyInstance(this.getCurrentMaster());
       myOutgoingPing.setInstanceType(MASTER);
       myOutgoingPing.setSlaveNumber(0);
     } else {
-      myInstance = new OnlineInstance(getUniqueId());
-      myInstance.setInstanceType(SLAVE);
+      this.setMyInstance(new OnlineInstance(getUniqueId()));
+      this.getMyInstance().setInstanceType(SLAVE);
       myOutgoingPing.setInstanceType(SLAVE);
       if(slavePosition > 0) {
-        myInstance.setSlaveNumber(slavePosition);
+        this.getMyInstance().setSlaveNumber(slavePosition);
         myOutgoingPing.setSlaveNumber(slavePosition);
       }
     }
@@ -67,7 +70,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   @Override
   public void pollTriggered() {
-    if(myInstance.getInstanceType() != MASTER) { // if we are master, we don't need to do anything
+    if(this.getMyInstance().getInstanceType() != MASTER) { // if we are master, we don't need to do anything
       if(!this.assignSlaveNumber()) { // if we don't have to assign slave numbers continue, otherwise assign and wait for next poll.
         checkPromotion();
       }
@@ -78,35 +81,32 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   private void purgeOldSlaveInstances() {
-    for(int counter = instances.size() - 1; counter >= 0; counter --) {
-      if(timedOut(instances.get(counter).getLastContact())) {
-        log.info("Removing timed out slave: " + instances.get(counter).getId().toString());
-        instances.remove(counter);
+    for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
+      if(timedOut(this.getInstances().get(counter).getLastContact())) {
+        log.info("Removing timed out slave: " + this.getInstances().get(counter).getId().toString());
+        this.getInstances().remove(counter);
       }
     }
   }
 
   private void checkPromotion() {
-    if(myInstance.getSlaveNumber() == 1) {
+    if(this.getMyInstance().getSlaveNumber() == 1) {
       if(masterNotAvailable()) {
         log.trace("Master not available, promoting myself to master.");
-        myInstance.setInstanceType(MASTER);
+        this.getMyInstance().setInstanceType(MASTER);
         myOutgoingPing.setInstanceType(MASTER);
         myOutgoingPing.setSlaveNumber(0);
         this.broadcaster.setPingData(myOutgoingPing);
-        myInstance.setSlaveNumber(0);
-        currentMaster = myInstance;
-        
-//        listener.stop();
-//        pollingThread.stop();
+        this.getMyInstance().setSlaveNumber(0);
+        this.setCurrentMaster(this.getMyInstance());
         
         this.notifyPromoteToMaster();
       }
     } else { // do we need to promote this slave?
-      if(slaveNotAvailable(myInstance.getSlaveNumber() - 1)) {
-        log.trace("Slave (" + (myInstance.getSlaveNumber() - 1) + ") not available, promoting myself.");
-        myInstance.setSlaveNumber(myInstance.getSlaveNumber() - 1);
-        myOutgoingPing.setSlaveNumber(myInstance.getSlaveNumber());
+      if(slaveNotAvailable(this.getMyInstance().getSlaveNumber() - 1)) {
+        log.trace("Slave (" + (this.getMyInstance().getSlaveNumber() - 1) + ") not available, promoting myself.");
+        this.getMyInstance().setSlaveNumber(this.getMyInstance().getSlaveNumber() - 1);
+        myOutgoingPing.setSlaveNumber(this.getMyInstance().getSlaveNumber());
         this.broadcaster.setPingData(myOutgoingPing);
         this.notifyPromoteSlave();
       }
@@ -128,10 +128,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   private boolean masterNotAvailable() {
-    if(currentMaster == null)
+    if(this.getCurrentMaster() == null)
       return true;
     else
-      return timedOut(currentMaster.getLastContact());
+      return timedOut(this.getCurrentMaster().getLastContact());
   }
 
   private boolean timedOut(long lastContact) {
@@ -141,13 +141,13 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   private boolean assignSlaveNumber() {
     boolean needToAssignNumbers = false;
     
-    if(myInstance.getSlaveNumber() == 0)
+    if(this.getMyInstance().getSlaveNumber() == 0)
       needToAssignNumbers = true;
     
     if(!needToAssignNumbers) {
-      for(OnlineInstance instance : instances) {
+      for(OnlineInstance instance : this.getInstances()) {
         // if any instances do not have a slave number, or if it is the same as ours, lets re-assign.
-        if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == myInstance.getSlaveNumber()) {
+        if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == this.getMyInstance().getSlaveNumber()) {
           needToAssignNumbers = true;
           break;
         }
@@ -156,17 +156,17 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     
     if(needToAssignNumbers) {
       // we're going to use the UUID, order those to decide the order of the slaves.
-      String[] instanceIds = new String[instances.size() + 1];
-      for(int counter = 0; counter < instances.size(); counter ++)
-        instanceIds[counter] = instances.get(counter).getId().toString();
+      String[] instanceIds = new String[this.getInstances().size() + 1];
+      for(int counter = 0; counter < this.getInstances().size(); counter ++)
+        instanceIds[counter] = this.getInstances().get(counter).getId().toString();
       
-      instanceIds[instanceIds.length - 1] = myInstance.getId().toString();
+      instanceIds[instanceIds.length - 1] = this.getMyInstance().getId().toString();
       
       Arrays.sort(instanceIds);
       for(int counter = 0; counter < instanceIds.length; counter ++) {
-        if(instanceIds[counter].equals(myInstance.getId().toString())) {
+        if(instanceIds[counter].equals(this.getMyInstance().getId().toString())) {
           log.info("Assigning myself slave position " + (counter + 1));
-          myInstance.setSlaveNumber(counter + 1);
+          this.getMyInstance().setSlaveNumber(counter + 1);
           myOutgoingPing.setSlaveNumber(counter + 1);
           this.broadcaster.setPingData(myOutgoingPing);
           break;
@@ -180,7 +180,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   public void start() throws Exception {
     this.listener.start();
     Thread.sleep(5000);
-    this.pollingThread.start();
+    this.getPollingThread().start();
     this.broadcaster.setPingData(myOutgoingPing);
     this.broadcaster.start();
   }
@@ -189,7 +189,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     log.info("Interlok instance stopped, destroying instance.");
     this.broadcaster.stop();
     this.listener.stop();
-    this.pollingThread.stop();
+    this.getPollingThread().stop();
   }
   
   public void stop() {
@@ -199,29 +199,29 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
 
   @Override
   public void masterPinged(Ping ping) {
-    if(currentMaster == null)
-      currentMaster = new OnlineInstance(ping.getInstanceId());
+    if(this.getCurrentMaster() == null)
+      this.setCurrentMaster(new OnlineInstance(ping.getInstanceId()));
     
-    if(currentMaster.getId().equals(uniqueId)) { // we are master!
+    if(this.getCurrentMaster().getId().equals(uniqueId)) { // we are master!
       if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are master
-        handleMasterConflict();
+        handleMasterConflict(this.getMyInstance(), ping);
     } else {
-      currentMaster.setInstanceType(MASTER);
-      currentMaster.setLastContact(System.currentTimeMillis());
-      currentMaster.setSlaveNumber(ping.getSlaveNumber());
+      this.getCurrentMaster().setInstanceType(MASTER);
+      this.getCurrentMaster().setLastContact(System.currentTimeMillis());
+      this.getCurrentMaster().setSlaveNumber(ping.getSlaveNumber());
     }
   }
 
   @Override
   public void slavePinged(Ping ping) {
-    if(ping.getInstanceId().equals(myInstance.getId())) {
-      myInstance.setLastContact(System.currentTimeMillis());
+    if(ping.getInstanceId().equals(this.getMyInstance().getId())) {
+      this.getMyInstance().setLastContact(System.currentTimeMillis());
     } else {
       OnlineInstance pingSource = this.getInstanceFromPing(ping);
       if(pingSource ==  null) {
         pingSource = new OnlineInstance(ping.getInstanceId());
         pingSource.setInstanceType(SLAVE);
-        instances.add(pingSource);
+        this.getInstances().add(pingSource);
       }
       pingSource.setLastContact(System.currentTimeMillis());
       pingSource.setSlaveNumber(ping.getSlaveNumber());
@@ -230,7 +230,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private OnlineInstance getInstanceFromPing(Ping ping) {
     OnlineInstance returnedInstance = null;
-    for(OnlineInstance onlineInstance : instances) {
+    for(OnlineInstance onlineInstance : this.getInstances()) {
       if(onlineInstance.getId().equals(ping.getInstanceId())) {
         returnedInstance = onlineInstance;
         break;
@@ -240,27 +240,27 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     return returnedInstance;
   }
 
-  private void handleMasterConflict() {
+  private void handleMasterConflict(OnlineInstance onlineInstance, Ping ping) {
     log.info("Another instance is already master, shutting down");
-    System.exit(1);
+    this.getMultiMasterConflictHandler().handle(onlineInstance, ping);
   }
   
   private void logState() {
     StringBuilder sb = new StringBuilder();
     sb.append("\nMy instance:\n");
-    sb.append(myInstance);
-    if(myInstance.getInstanceType() == SLAVE) {
+    sb.append(this.getMyInstance());
+    if(this.getMyInstance().getInstanceType() == SLAVE) {
       sb.append("\nCurrent master instance:\n");
-      if(currentMaster == null)
+      if(this.getCurrentMaster() == null)
         sb.append("Null.\n");
       else
-        sb.append(currentMaster);
+        sb.append(this.getCurrentMaster());
     }
     sb.append("\nOther online slave instances:\n");
-    if(instances.size() == 0)
+    if(this.getInstances().size() == 0)
       sb.append("None.\n");
     else {
-      for(OnlineInstance instance : instances)
+      for(OnlineInstance instance : this.getInstances())
         sb.append(instance);
     }
     log.trace(sb.toString());
@@ -283,7 +283,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   public void notifyPromoteSlave() {
     for(StateChangeEventListener changeEventListener : this.listeners)
-      changeEventListener.promoteSlave(myInstance.getSlaveNumber());
+      changeEventListener.promoteSlave(this.getMyInstance().getSlaveNumber());
   }
 
   @Override
@@ -311,6 +311,46 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
 
   public void setInstanceTimeoutSeconds(int instanceTimeoutSeconds) {
     this.instanceTimeoutSeconds = instanceTimeoutSeconds;
+  }
+
+  public MonitorThread getPollingThread() {
+    return pollingThread;
+  }
+
+  public void setPollingThread(MonitorThread pollingThread) {
+    this.pollingThread = pollingThread;
+  }
+
+  public OnlineInstance getMyInstance() {
+    return myInstance;
+  }
+
+  public void setMyInstance(OnlineInstance myInstance) {
+    this.myInstance = myInstance;
+  }
+
+  public OnlineInstance getCurrentMaster() {
+    return currentMaster;
+  }
+
+  public void setCurrentMaster(OnlineInstance currentMaster) {
+    this.currentMaster = currentMaster;
+  }
+
+  public List<OnlineInstance> getInstances() {
+    return instances;
+  }
+
+  public void setInstances(List<OnlineInstance> instances) {
+    this.instances = instances;
+  }
+
+  public MultiMasterConflictHandler getMultiMasterConflictHandler() {
+    return multiMasterConflictHandler;
+  }
+
+  public void setMultiMasterConflictHandler(MultiMasterConflictHandler multiMasterConflictHandler) {
+    this.multiMasterConflictHandler = multiMasterConflictHandler;
   }
 
 }

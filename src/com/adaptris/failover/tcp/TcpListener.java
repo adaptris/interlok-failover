@@ -14,6 +14,7 @@ import com.adaptris.failover.Listener;
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
 import com.adaptris.failover.util.PacketHelper;
+import com.adaptris.failover.util.SocketFactory;
 
 public class TcpListener implements Listener {
 
@@ -22,6 +23,7 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
   private List<PingEventListener> listeners;
   private ServerSocket socket;
   private int port;
+  private SocketFactory socketFactory;
   private volatile boolean shutdownRequested;
   
   public TcpListener(final int port) {
@@ -29,9 +31,10 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
     
     shutdownRequested = false;
     listeners = new ArrayList<PingEventListener>();
+    this.setSocketFactory(new SocketFactory());
   }
   
-  public void start() {
+  public void start() throws IOException {
     try {
       socketConnect();
       
@@ -57,13 +60,13 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
       }).start();
       
     } catch (IOException ex) {
-      ex.printStackTrace();
       log.error("Error with the TCP Listener, cannot start it up.");
+      throw ex;
     }
   }
   
   private void socketConnect() throws IOException {
-    socket = new ServerSocket(this.getPort());
+    socket = this.getSocketFactory().createServerSocket(this.getPort());
     socket.setSoTimeout(30000);
   }
 
@@ -141,6 +144,14 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
       }
     }
     
+  }
+
+  public SocketFactory getSocketFactory() {
+    return socketFactory;
+  }
+
+  public void setSocketFactory(SocketFactory socketFactory) {
+    this.socketFactory = socketFactory;
   }
 
 }
