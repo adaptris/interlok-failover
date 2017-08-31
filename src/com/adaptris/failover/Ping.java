@@ -37,5 +37,15 @@ public class Ping {
   public void setInstanceType(int instanceType) {
     this.instanceType = instanceType;
   }
+  
+  public String toString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append(this.getInstanceId().toString());
+    sb.append(" :: ");
+    sb.append(this.getInstanceType() == 1 ? "MASTER" : "SLAVE");
+    sb.append(" :: ");
+    sb.append("Slave number: " + this.getSlaveNumber());
+    return sb.toString();
+  }
 
 }

@@ -19,7 +19,7 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
   protected void startFailover(Properties bootstrapProperties) {
     log.info("Starting Interlok instance in failover mode as a slave.");
         
-    String slaveNumber = bootstrapProperties.getProperty(FAILOVER_SLAVE_NUMBER_KEY);
+    String slaveNumber = this.getPropertyValue(bootstrapProperties, FAILOVER_SLAVE_NUMBER_KEY);
     int slavePosition = 0;
     if(!StringUtils.isEmpty(slaveNumber)) {
       slavePosition = Integer.parseInt(slaveNumber);
@@ -52,6 +52,14 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
       doUsage();
     } else
       new FailoverBootstrap().doBootstrap(arguments[0]);
+  }
+  
+  private String getPropertyValue(Properties properties, String key) {
+    String propertyValue = System.getProperty(key);
+    if(propertyValue == null) {
+      return properties.getProperty(key);
+    }
+    return propertyValue;
   }
 
 }

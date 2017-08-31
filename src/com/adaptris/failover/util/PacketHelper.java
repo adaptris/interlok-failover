@@ -19,7 +19,11 @@ public class PacketHelper {
   }
   
   public static Ping createPingRecord(DatagramPacket datagramPacket) {
-    ByteBuffer byteBuffer = ByteBuffer.wrap(datagramPacket.getData());
+    return createPingRecord(datagramPacket.getData());
+  }
+  
+  public static Ping createPingRecord(byte[] data) {
+    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
     
     Ping ping = new Ping();
     long bigBits = byteBuffer.getLong();
@@ -32,6 +36,11 @@ public class PacketHelper {
   }
   
   public static DatagramPacket createDatagramPacket(Ping ping, String group, int port) throws UnknownHostException {
+    byte[] packetBytes = createDataPacket(ping);
+    return new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(group), port);
+  }
+  
+  public static byte[] createDataPacket(Ping ping) throws UnknownHostException {
     ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[24]);
     
     byteBuffer.putLong(ping.getInstanceId().getMostSignificantBits());
@@ -39,9 +48,7 @@ public class PacketHelper {
     byteBuffer.putInt(ping.getInstanceType());
     byteBuffer.putInt(ping.getSlaveNumber());
     
-    byte[] packetBytes = byteBuffer.array();
-    
-    return new DatagramPacket(packetBytes, packetBytes.length, InetAddress.getByName(group), port);
+    return byteBuffer.array();
   }
 
 }
