@@ -4,13 +4,10 @@ import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY
 
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.adaptris.core.management.ClasspathInitialiser;
 
 public class FailoverMasterBootstrap extends FailoverBootstrapImp {
-  
-  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
-  
+
   private FailoverManager failoverManager;
   
   @Override
@@ -39,6 +36,8 @@ public class FailoverMasterBootstrap extends FailoverBootstrapImp {
   }
   
   public static final void main(String[] arguments) {
+    System.err.println("FailoverMasterBootstrap is deprecated, and will be removed for Java9 support");
+    ClasspathInitialiser.init(null, false);
     if(arguments.length != 1) {
       doUsage();
     } else

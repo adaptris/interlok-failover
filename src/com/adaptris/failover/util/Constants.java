@@ -2,6 +2,8 @@ package com.adaptris.failover.util;
 
 public class Constants {
   
+  public static final boolean DEBUG = Boolean.getBoolean("interlok.failover.debug");
+
   public static final int MASTER = 1;
   
   public static final int SLAVE = 2;
@@ -22,4 +24,5 @@ public class Constants {
   
   public static final String FAILOVER_INSTANCE_TIMEOUT_KEY = "failover.instance.timeout.seconds";
   
+  public static final String FAILOVER_DEFAULT_RESOURCE = com.adaptris.core.management.Constants.DEFAULT_PROPS_RESOURCE;
 }

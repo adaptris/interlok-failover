@@ -6,13 +6,11 @@ import static com.adaptris.failover.util.Constants.FAILOVER_SLAVE_NUMBER_KEY;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.adaptris.core.management.ClasspathInitialiser;
 
 public class FailoverBootstrap extends FailoverBootstrapImp {
-  
-  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
-  
+
   private FailoverManager failoverManager;
 
   @Override
@@ -47,13 +45,15 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
       failoverManager.stopFailoverManager();
   }
   
-  public static final void main(String[] arguments) {
+  public static void main(String[] arguments) throws Exception {
+    System.err.println("FailoverBootstrap is deprecated, and will be removed for Java9 support");
+    ClasspathInitialiser.init(null, false);
     if(arguments.length != 1) {
       doUsage();
     } else
       new FailoverBootstrap().doBootstrap(arguments[0]);
   }
-  
+
   private String getPropertyValue(Properties properties, String key) {
     String propertyValue = System.getProperty(key);
     if(propertyValue == null) {

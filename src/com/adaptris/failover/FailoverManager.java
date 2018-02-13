@@ -8,8 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adaptris.failover.util.Constants;
 
 public class FailoverManager implements PingEventListener, StateChangeEventSender, Triggerable {
   
@@ -83,7 +87,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   private void purgeOldSlaveInstances() {
     for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
       if(timedOut(this.getInstances().get(counter).getLastContact())) {
-        log.info("Removing timed out slave: " + this.getInstances().get(counter).getId().toString());
+        log.info("Removing timed out slave: {}", this.getInstances().get(counter).getId().toString());
         this.getInstances().remove(counter);
       }
     }
@@ -104,7 +108,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       }
     } else { // do we need to promote this slave?
       if(slaveNotAvailable(this.getMyInstance().getSlaveNumber() - 1)) {
-        log.trace("Slave (" + (this.getMyInstance().getSlaveNumber() - 1) + ") not available, promoting myself.");
+        log.trace("Slave ({}) not available, promoting self", (this.getMyInstance().getSlaveNumber() - 1));
         this.getMyInstance().setSlaveNumber(this.getMyInstance().getSlaveNumber() - 1);
         myOutgoingPing.setSlaveNumber(this.getMyInstance().getSlaveNumber());
         this.broadcaster.setPingData(myOutgoingPing);
@@ -165,7 +169,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       Arrays.sort(instanceIds);
       for(int counter = 0; counter < instanceIds.length; counter ++) {
         if(instanceIds[counter].equals(this.getMyInstance().getId().toString())) {
-          log.info("Assigning myself slave position " + (counter + 1));
+          log.debug("Assigning myself slave position {}", (counter + 1));
           this.getMyInstance().setSlaveNumber(counter + 1);
           myOutgoingPing.setSlaveNumber(counter + 1);
           this.broadcaster.setPingData(myOutgoingPing);
@@ -241,29 +245,19 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   private void handleMasterConflict(OnlineInstance onlineInstance, Ping ping) {
-    log.info("Another instance is already master, shutting down");
+    log.warn("Another instance is already master, shutting down");
     this.getMultiMasterConflictHandler().handle(onlineInstance, ping);
   }
   
   private void logState() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("\nMy instance:\n");
-    sb.append(this.getMyInstance());
-    if(this.getMyInstance().getInstanceType() == SLAVE) {
-      sb.append("\nCurrent master instance:\n");
-      if(this.getCurrentMaster() == null)
-        sb.append("Null.\n");
-      else
-        sb.append(this.getCurrentMaster());
+    if (Constants.DEBUG && log.isTraceEnabled()) {
+      ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).append("Self", getMyInstance());
+      if (getMyInstance().getInstanceType() == SLAVE) {
+        builder.append("master", getCurrentMaster());
+      }
+      builder.append("slaves", getInstances());
+      log.trace(builder.toString());
     }
-    sb.append("\nOther online slave instances:\n");
-    if(this.getInstances().size() == 0)
-      sb.append("None.\n");
-    else {
-      for(OnlineInstance instance : this.getInstances())
-        sb.append(instance);
-    }
-    log.trace(sb.toString());
   }
   
   @Override

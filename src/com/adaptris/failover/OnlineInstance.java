@@ -4,6 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
 import com.adaptris.failover.util.Constants;
 
 public class OnlineInstance {
@@ -63,20 +66,10 @@ public class OnlineInstance {
   }
   
   public String toString() {
-    StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("[ID: " + this.getId().toString());
-    stringBuilder.append(" --");
-    if(this.getInstanceType() == Constants.MASTER)
-      stringBuilder.append("Type: Master");
-    else
-      stringBuilder.append("Type: Slave");
-    stringBuilder.append(" -- ");
-    stringBuilder.append("Slave position: " + this.getSlaveNumber());
-    stringBuilder.append(" -- ");
-    stringBuilder.append("Last Contact: " + sdf.format(new Date(this.getLastContact())));
-    stringBuilder.append("]\n");
-    
-    return stringBuilder.toString();
+    return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("ID", getId())
+        .append("Type", getInstanceType() == Constants.MASTER ? "master" : "slave").append("Position", getSlaveNumber())
+        .append("last", new Date(getLastContact()))
+        .toString();
   }
 
 }
