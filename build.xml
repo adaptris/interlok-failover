@@ -71,8 +71,26 @@
   </target>
 
   <target name="jar.resources" depends="prepare">
-    <adapter:create-manifest file="${build.dir}/Manifest.mf" title="${manifest.title}"/>
-
+   <pathconvert property="jar.classpath" pathsep=" ">
+      <path refid="main.classpath"/>
+        <mapper>
+          <chainedmapper>
+            <flattenmapper/>
+            <regexpmapper from="^(.*)-[0-9]+.*.jar$$" to="\1.jar" casesensitive="no"/>						
+          </chainedmapper>
+        </mapper>
+    </pathconvert>	
+    <manifest file="${build.dir}/Manifest.mf">
+      <attribute name="Manifest-Version" value="1.0"/>
+      <attribute name="Build-Version" value="${ivy.publish.revision}"/>
+      <attribute name="Built-By" value="${user.name}"/>
+      <attribute name="Main-Class" value="com.adaptris.failover.FailoverBootstrap"/>
+      <attribute name="Class-Path" value="${jar.classpath}" />
+      <attribute name="Implementation-Vendor" value="Adaptris Ltd"/>
+      <attribute name="Implementation-Vendor-Id" value="com.adaptris"/>
+      <attribute name="Implementation-Version" value="${ivy.publish.revision}"/>
+      <attribute name="Implementation-Title" value="${manifest.title}"/>
+    </manifest>
   </target>
 
   <target name="jar" depends="compile, jar.resources" description="Build a jar file">

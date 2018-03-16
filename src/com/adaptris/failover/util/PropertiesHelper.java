@@ -2,34 +2,57 @@ package com.adaptris.failover.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.adaptris.core.management.BootstrapProperties;
-
 public class PropertiesHelper {
 
-  public static Properties loadFromFile(String filePath) throws Exception {
-    Properties returnProperties = new Properties();    
-    InputStream inputStream = null;
-    
-    File propertiesFile = new File(filePath);
-    if (propertiesFile.exists())
-      inputStream = new FileInputStream(propertiesFile);
-    else 
-      inputStream = BootstrapProperties.class.getClassLoader().getResourceAsStream(filePath);
-    
-    if (inputStream == null)
-      throw new IOException("cannot locate resource [" + filePath + "]");
-    
+  public static Properties load(String resource, String defaultResource) throws IOException {
     try {
-      returnProperties.load(inputStream);
-    } finally {
-      inputStream.close();
+      return load(resource);
     }
+    catch (IOException e) {
+      return load(defaultResource);
+    }
+  }
 
-    return returnProperties;
+  public static Properties load(String resource) throws IOException {
+    try {
+      return viaFile(resource);
+    }
+    catch (FileNotFoundException e) {
+      return viaClassloader(resource);
+    }
+  }
+
+  static Properties viaFile(String filePath) throws IOException {
+    Properties result = new Properties();
+    File containerProperties = new File(filePath);
+    if (containerProperties.exists()) {
+      try (FileInputStream in = new FileInputStream(containerProperties)) {
+        result.load(in);
+      }
+    }
+    else {
+      throw new FileNotFoundException(filePath);
+    }
+    return result;
+  }
+
+  static Properties viaClassloader(String resource) throws IOException {
+    Properties result = new Properties();
+    InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+    if (in != null) {
+      try (InputStream read = in) {
+        result.load(read);
+      }
+    }
+    else {
+      throw new FileNotFoundException(resource);
+    }
+    return result;
   }
   
   public static void verifyProperties(Properties properties, String... requiredKeys) throws Exception {

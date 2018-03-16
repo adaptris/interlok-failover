@@ -18,7 +18,7 @@ public class PropertiesHelperTest extends TestCase {
   }
   
   public void testLoadProperties() throws Exception {
-    Properties properties = PropertiesHelper.loadFromFile(PROPERTIES_PATH);
+    Properties properties = PropertiesHelper.load(PROPERTIES_PATH);
     assertEquals("tcp", properties.getProperty(Constants.SOCKET_MODE));
     assertEquals("4444", properties.getProperty(Constants.FAILOVER_TCP_PORT_KEY));
     assertEquals("localhost:4445;localhost:4446", properties.getProperty(Constants.FAILOVER_TCP_PEERS_KEY));
@@ -26,7 +26,7 @@ public class PropertiesHelperTest extends TestCase {
   
   public void testLoadPropertiesDoesnExist() throws Exception {
     try {
-      PropertiesHelper.loadFromFile("IDoNotExist");
+      PropertiesHelper.load("IDoNotExist");
       fail("Should fail, properties does not exist.");
     } catch(IOException ex) {
       //expected
@@ -34,12 +34,12 @@ public class PropertiesHelperTest extends TestCase {
   }
 
   public void testVerifyProperties() throws Exception {
-    Properties properties = PropertiesHelper.loadFromFile(PROPERTIES_PATH);
+    Properties properties = PropertiesHelper.load(PROPERTIES_PATH);
     PropertiesHelper.verifyProperties(properties, Constants.SOCKET_MODE, Constants.FAILOVER_TCP_PORT_KEY, Constants.FAILOVER_TCP_PEERS_KEY);
   }
   
   public void testVerifyPropertiesDoesntExist() throws Exception {
-    Properties properties = PropertiesHelper.loadFromFile(PROPERTIES_PATH);
+    Properties properties = PropertiesHelper.load(PROPERTIES_PATH);
     try {
       PropertiesHelper.verifyProperties(properties, "MyMadeUpProperty");
       fail("Should fail, required property does not exist");
