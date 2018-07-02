@@ -1,10 +1,9 @@
 package com.adaptris.failover.tcp;
 
 import static org.mockito.Matchers.any;
-
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -130,7 +129,7 @@ public class TcpListenerTest extends TestCase {
     tcpListener.registerListener(mockPingEventListener);
     tcpListener.start();
     
-    Thread.sleep(6000); // will reconnect after 5 seconds, so we should see 2 connects (first on start, second for reconnect)
+    Thread.sleep(7000); // will reconnect after 5 seconds, so we should see 2 connects (first on start, second for reconnect)
     
     verify(mockServerSocket, times(2)).setSoTimeout(any(int.class));
   }
