@@ -5,10 +5,13 @@ import static com.adaptris.failover.util.Constants.FAILOVER_DEFAULT_RESOURCE;
 import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_PING_INTERVAL_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_TCP_HOST_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PEERS_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PORT_KEY;
 import static com.adaptris.failover.util.Constants.SOCKET_MODE;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -147,6 +150,27 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
     
     bootstrap = new UnifiedBootstrap(bootProperties);
     adapterMBean = bootstrap.createAdapter();
+  }
+  
+  protected String determineMyHost(Properties bootstrapProperties) throws UnknownHostException {
+    if(bootstrapProperties.containsKey(FAILOVER_TCP_HOST_KEY))
+      return bootstrapProperties.getProperty(FAILOVER_TCP_HOST_KEY);
+    else {
+      try {
+        return Inet4Address.getLocalHost().getHostAddress();
+      } catch (UnknownHostException e) {
+        log.error("Could not determine local host IP address, please consider setting the failover.tcp.host manually in the bootstrap.properties.");
+        throw e;
+      }
+    }
+  }
+  
+  protected String determineMyPort(Properties bootstrapProperties) throws UnknownHostException {
+    if(bootstrapProperties.containsKey(FAILOVER_TCP_PORT_KEY))
+      return bootstrapProperties.getProperty(FAILOVER_TCP_PORT_KEY);
+    else {
+      return "0";
+    }
   }
 
   //Jira 154 : If the adapter is configured with a shared connection that has a fixed-number of retries

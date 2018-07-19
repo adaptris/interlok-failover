@@ -135,7 +135,7 @@ protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName
       try {
         int byteCount = clientSocket.getInputStream().read(data);
         if(byteCount != PacketHelper.STANDARD_PACKET_SIZE) {
-          log.warn("Incorrect packet size received on the TCP socket, ignoring this data stream.");
+          log.warn("Incorrect packet size ({}) received on the TCP socket, ignoring this data stream.", byteCount);
         } else {
           sendPingEvent(data);
         }

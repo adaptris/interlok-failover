@@ -14,10 +14,11 @@ public class FailoverMasterBootstrap extends FailoverBootstrapImp {
   protected void startFailover(Properties bootstrapProperties) {
     log.info("Starting Interlok instance in failover mode as the master.");
     
-    failoverManager = new FailoverManager(listener, broadcaster, true, 0);
-    if(bootstrapProperties.containsKey(FAILOVER_INSTANCE_TIMEOUT_KEY))
-      failoverManager.setInstanceTimeoutSeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_INSTANCE_TIMEOUT_KEY)));
     try {
+      failoverManager = new FailoverManager(this.determineMyHost(bootstrapProperties), this.determineMyPort(bootstrapProperties), listener, broadcaster, true, 0);
+      if(bootstrapProperties.containsKey(FAILOVER_INSTANCE_TIMEOUT_KEY))
+        failoverManager.setInstanceTimeoutSeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_INSTANCE_TIMEOUT_KEY)));
+    
       failoverManager.registerListener(this);
       failoverManager.start();
       

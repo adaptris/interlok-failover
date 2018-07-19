@@ -14,6 +14,8 @@ public class Constants {
   
   public static final String FAILOVER_TCP_PORT_KEY = "failover.tcp.port";
   
+  public static final String FAILOVER_TCP_HOST_KEY = "failover.tcp.host";
+  
   public static final String FAILOVER_GROUP_KEY = "failover.multicast.group";
   
   public static final String FAILOVER_PORT_KEY = "failover.multicast.port";

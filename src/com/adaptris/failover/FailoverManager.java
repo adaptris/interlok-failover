@@ -37,7 +37,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private MultiMasterConflictHandler multiMasterConflictHandler;
   
-  public FailoverManager(Listener listener, Broadcaster broadcaster, boolean master, int slavePosition) {
+  public FailoverManager(String myHost, String myPort, Listener listener, Broadcaster broadcaster, boolean master, int slavePosition) {
     this.listener = listener;
     this.listener.registerListener(this);
     
@@ -55,6 +55,9 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     
     myOutgoingPing = new Ping();
     myOutgoingPing.setInstanceId(getUniqueId());
+    myOutgoingPing.setSourceHost(myHost);
+    myOutgoingPing.setSourcePort(myPort);
+    
     if(master) {
       this.setCurrentMaster(new OnlineInstance(this.getUniqueId()));
       this.getCurrentMaster().setInstanceType(MASTER);
@@ -226,6 +229,8 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
         pingSource = new OnlineInstance(ping.getInstanceId());
         pingSource.setInstanceType(SLAVE);
         this.getInstances().add(pingSource);
+
+        this.broadcaster.getPeers().add(new Peer(ping.getSourceHost(), Integer.parseInt(ping.getSourcePort())));
       }
       pingSource.setLastContact(System.currentTimeMillis());
       pingSource.setSlaveNumber(ping.getSlaveNumber());

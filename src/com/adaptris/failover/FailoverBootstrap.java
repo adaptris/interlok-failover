@@ -2,7 +2,11 @@ package com.adaptris.failover;
 
 import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_SLAVE_NUMBER_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_TCP_HOST_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PORT_KEY;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -25,10 +29,13 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
     } else {
       log.info("No slave position has been set, one will be allocated.");
     }
-    failoverManager = new FailoverManager(listener, broadcaster, false, slavePosition);
-    if(bootstrapProperties.containsKey(FAILOVER_INSTANCE_TIMEOUT_KEY))
-      failoverManager.setInstanceTimeoutSeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_INSTANCE_TIMEOUT_KEY)));
+    
+    
     try {
+      failoverManager = new FailoverManager(determineMyHost(bootstrapProperties), determineMyPort(bootstrapProperties), listener, broadcaster, false, slavePosition);
+      if(bootstrapProperties.containsKey(FAILOVER_INSTANCE_TIMEOUT_KEY))
+        failoverManager.setInstanceTimeoutSeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_INSTANCE_TIMEOUT_KEY)));
+          
       failoverManager.registerListener(this);
       failoverManager.start();
       
@@ -39,7 +46,7 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
       System.exit(1);
     }
   }
-  
+
   protected void stopFailover() {
     if(failoverManager != null)
       failoverManager.stopFailoverManager();

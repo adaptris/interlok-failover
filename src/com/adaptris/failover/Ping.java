@@ -3,8 +3,12 @@ package com.adaptris.failover;
 import java.util.UUID;
 
 public class Ping {
-    
+  
   private UUID instanceId;
+  
+  private String sourceHost;
+  
+  private String sourcePort;
   
   // 1 = Master, 2 = Slave
   private int instanceType;
@@ -38,6 +42,22 @@ public class Ping {
     this.instanceType = instanceType;
   }
   
+  public String getSourceHost() {
+    return sourceHost;
+  }
+
+  public void setSourceHost(String sourceHost) {
+    this.sourceHost = sourceHost;
+  }
+
+  public String getSourcePort() {
+    return sourcePort;
+  }
+
+  public void setSourcePort(String sourcePort) {
+    this.sourcePort = sourcePort;
+  }
+
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(this.getInstanceId().toString());
@@ -45,6 +65,10 @@ public class Ping {
     sb.append(this.getInstanceType() == 1 ? "MASTER" : "SLAVE");
     sb.append(" :: ");
     sb.append("Slave number: " + this.getSlaveNumber());
+    sb.append(" :: ");
+    sb.append("Source host: " + this.getSourceHost());
+    sb.append(" :: ");
+    sb.append("Source port: " + this.getSourcePort());
     return sb.toString();
   }
 

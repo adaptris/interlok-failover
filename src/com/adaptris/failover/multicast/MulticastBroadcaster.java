@@ -1,6 +1,7 @@
 package com.adaptris.failover.multicast;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adaptris.failover.Broadcaster;
 import com.adaptris.failover.NetworkPingSender;
+import com.adaptris.failover.Peer;
 import com.adaptris.failover.Ping;
 
 public class MulticastBroadcaster implements Broadcaster {
@@ -110,6 +112,11 @@ public class MulticastBroadcaster implements Broadcaster {
 
   public void setNetworkPingSender(NetworkPingSender networkPingSender) {
     this.networkPingSender = networkPingSender;
+  }
+
+  @Override
+  public List<Peer> getPeers() {
+    return null;
   }
 
 }

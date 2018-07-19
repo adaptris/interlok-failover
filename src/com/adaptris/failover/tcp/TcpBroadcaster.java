@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.adaptris.failover.Broadcaster;
 import com.adaptris.failover.NetworkPingSender;
+import com.adaptris.failover.Peer;
 import com.adaptris.failover.Ping;
 
 public class TcpBroadcaster implements Broadcaster {
@@ -54,7 +55,7 @@ public class TcpBroadcaster implements Broadcaster {
           try {
             getNetworkPingSender().sendData(peer.getHost(), peer.getPort(), getPingData());
           } catch (Exception e) {
-            log.warn("Remote Peer not available, ignoring: " + peer.host + ":" + peer.getPort());
+            log.warn("Remote Peer not available, ignoring: " + peer.getHost() + ":" + peer.getPort());
           }
         }
       }
@@ -131,31 +132,4 @@ public class TcpBroadcaster implements Broadcaster {
     this.networkPingSender = networkPingSender;
   }
 
-  class Peer {
-    
-    private String host;
-    private int port;
-    
-    public Peer(String host, int port) {
-      this.setHost(host);
-      this.setPort(port);
-    }
-
-    public String getHost() {
-      return host;
-    }
-
-    public void setHost(String host) {
-      this.host = host;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    public void setPort(int port) {
-      this.port = port;
-    }
-    
-  }
 }
