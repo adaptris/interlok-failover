@@ -36,7 +36,7 @@ public class FailoverManagerTest extends TestCase {
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
-    failoverManager = new FailoverManager(mockListener, mockBroadcaster, false, 0);
+    failoverManager = new FailoverManager("myHost", "1111", mockListener, mockBroadcaster, false, 0);
     failoverManager.setPollingThread(mockMonitorThread);
     failoverManager.registerListener(mockStateChangeEventListener);
     failoverManager.setMultiMasterConflictHandler(mockMultiMasterConflictHandler);
@@ -149,7 +149,7 @@ public class FailoverManagerTest extends TestCase {
   
   public void testMasterConflictHandled() throws Exception {
     // make sure we are master
-    failoverManager = new FailoverManager(mockListener, mockBroadcaster, true, 0);
+    failoverManager = new FailoverManager("myHost", "1111", mockListener, mockBroadcaster, true, 0);
     failoverManager.setPollingThread(mockMonitorThread);
     failoverManager.registerListener(mockStateChangeEventListener);
     failoverManager.setMultiMasterConflictHandler(mockMultiMasterConflictHandler);
