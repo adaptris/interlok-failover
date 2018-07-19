@@ -28,6 +28,8 @@ public class PacketHelperTest extends TestCase {
     pingRecord.setInstanceId(uuid);
     pingRecord.setInstanceType(MASTER);
     pingRecord.setSlaveNumber(5);
+    pingRecord.setSourceHost("myHost");
+    pingRecord.setSourcePort("1111");
     
     byte[] dataPacket = PacketHelper.createDataPacket(pingRecord);
     
@@ -44,6 +46,8 @@ public class PacketHelperTest extends TestCase {
     pingRecord.setInstanceId(uuid);
     pingRecord.setInstanceType(SLAVE);
     pingRecord.setSlaveNumber(5);
+    pingRecord.setSourceHost("myHost");
+    pingRecord.setSourcePort("1111");
     
     DatagramPacket dataPacket = PacketHelper.createDatagramPacket(pingRecord, GROUP, PORT);
     

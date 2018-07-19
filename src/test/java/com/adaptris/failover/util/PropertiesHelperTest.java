@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 
 public class PropertiesHelperTest extends TestCase {
   
-  private static final String PROPERTIES_PATH = "./test/resources/bootstrap.properties";
+  private static final String PROPERTIES_PATH = "./src/test/resources/bootstrap.properties";
   
   public void setUp() throws Exception {
     

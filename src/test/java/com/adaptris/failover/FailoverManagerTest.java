@@ -45,11 +45,15 @@ public class FailoverManagerTest extends TestCase {
     mockMasterPing.setInstanceId(UUID.randomUUID());
     mockMasterPing.setInstanceType(MASTER);
     mockMasterPing.setSlaveNumber(0);
+    mockMasterPing.setSourceHost("myHost");
+    mockMasterPing.setSourcePort("1111");
     
     mockSlavePing = new Ping();
     mockSlavePing.setInstanceId(UUID.randomUUID());
     mockSlavePing.setInstanceType(SLAVE);
     mockSlavePing.setSlaveNumber(1);
+    mockSlavePing.setSourceHost("myHost");
+    mockSlavePing.setSourcePort("1111");
   }
   
   public void tearDown() throws Exception {
