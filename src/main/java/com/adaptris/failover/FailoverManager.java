@@ -215,6 +215,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are master
         handleMasterConflict(this.getMyInstance(), ping);
     } else {
+      this.getCurrentMaster().setId(ping.getInstanceId());
       this.getCurrentMaster().setInstanceType(MASTER);
       this.getCurrentMaster().setLastContact(System.currentTimeMillis());
       this.getCurrentMaster().setSlaveNumber(ping.getSlaveNumber());
