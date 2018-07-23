@@ -154,9 +154,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     if(!needToAssignNumbers) {
       for(OnlineInstance instance : this.getInstances()) {
         // if any instances do not have a slave number, or if it is the same as ours, lets re-assign.
-        if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == this.getMyInstance().getSlaveNumber()) {
-          needToAssignNumbers = true;
-          break;
+        if(instance.getInstanceType() != MASTER) {
+          if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == this.getMyInstance().getSlaveNumber()) {
+            needToAssignNumbers = true;
+            break;
+          }
         }
       }
     }
