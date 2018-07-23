@@ -26,4 +26,13 @@ public class Peer {
     this.port = port;
   }
   
+  public boolean equals(Object object) {
+    if(object instanceof Peer) {
+      if((((Peer) object).getHost().equals(this.getHost()))
+          && (((Peer) object).getPort() == this.getPort()))
+        return true;
+    } else
+      return false;
+    return false;
+  }
 }

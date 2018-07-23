@@ -1,6 +1,7 @@
 package com.adaptris.failover.multicast;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,6 +30,7 @@ public class MulticastBroadcaster implements Broadcaster {
   private int port;
   private Ping pingData;
   private int sendDelaySeconds;
+  private List<Peer> peers;
   private NetworkPingSender networkPingSender;
   
   public MulticastBroadcaster(final String group, final int port) {
@@ -36,6 +38,7 @@ public class MulticastBroadcaster implements Broadcaster {
     this.setPort(port);
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
     this.setNetworkPingSender(new MulticastNetworkPingSender());
+    this.setPeers(new ArrayList<>());
   }
   
   public void start() throws IOException {
@@ -116,7 +119,11 @@ public class MulticastBroadcaster implements Broadcaster {
 
   @Override
   public List<Peer> getPeers() {
-    return null;
+    return this.peers;
+  }
+
+  public void setPeers(List<Peer> peers) {
+    this.peers = peers;
   }
 
 }

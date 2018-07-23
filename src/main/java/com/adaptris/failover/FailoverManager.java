@@ -211,6 +211,16 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     if(this.getCurrentMaster() == null)
       this.setCurrentMaster(new OnlineInstance(ping.getInstanceId()));
     
+    // see if we need to remove the master from the list of slaves.
+    for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
+      if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
+        if (Constants.DEBUG && log.isTraceEnabled())
+          log.debug("Removing new master ({}) from list of slaves.", ping.getInstanceId().toString()); 
+        
+        this.getInstances().remove(counter);
+      }
+    }
+    
     if(this.getCurrentMaster().getId().equals(uniqueId)) { // we are master!
       if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are master
         handleMasterConflict(this.getMyInstance(), ping);
@@ -232,11 +242,14 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
         pingSource = new OnlineInstance(ping.getInstanceId());
         pingSource.setInstanceType(SLAVE);
         this.getInstances().add(pingSource);
-
-        this.broadcaster.getPeers().add(new Peer(ping.getSourceHost(), Integer.parseInt(ping.getSourcePort())));
       }
       pingSource.setLastContact(System.currentTimeMillis());
       pingSource.setSlaveNumber(ping.getSlaveNumber());
+      
+      // check to see if our broadcaster needs to know about this peer.
+      Peer peer = new Peer(ping.getSourceHost(), Integer.parseInt(ping.getSourcePort()));
+      if(!this.broadcaster.getPeers().contains(peer))
+        this.broadcaster.getPeers().add(peer);
     }
   }
   
