@@ -29,7 +29,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private OnlineInstance myInstance;
   private OnlineInstance currentMaster;
-  private List<OnlineInstance> instances;
+  private volatile List<OnlineInstance> instances;
   
   private Ping myOutgoingPing;
   
@@ -212,12 +212,14 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       this.setCurrentMaster(new OnlineInstance(ping.getInstanceId()));
     
     // see if we need to remove the master from the list of slaves.
-    for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
-      if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
-        if (Constants.DEBUG && log.isTraceEnabled())
-          log.debug("Removing new master ({}) from list of slaves.", ping.getInstanceId().toString()); 
-        
-        this.getInstances().remove(counter);
+    synchronized(this.getInstances()) {
+      for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
+        if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
+          if (Constants.DEBUG && log.isTraceEnabled())
+            log.debug("Removing new master ({}) from list of slaves.", ping.getInstanceId().toString()); 
+          
+          this.getInstances().remove(counter);
+        }
       }
     }
     
