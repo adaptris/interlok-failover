@@ -67,9 +67,9 @@ configurations.all {
 dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
-  
-  compile ("org.slf4j:slf4j-api:$slf4jVersion")  
-  
+
+  compile ("org.slf4j:slf4j-api:$slf4jVersion")
+
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
   testCompile ('junit:junit:4.12')
@@ -156,9 +156,13 @@ publishing {
       artifact javadocJar { classifier "javadoc" }
 
       pom.withXml {
+        asNode().appendNode("name", componentName)
         asNode().appendNode("description", "Interlok can start in a failover cluster.")
+        asNode().appendNode("url", "http://interlok.adaptris.net/interlok-docs/advanced-failover.html")
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.6.6+")
+        properties.appendNode("tags", "failover")
+        properties.appendNode("license", "false")
       }
     }
   }
