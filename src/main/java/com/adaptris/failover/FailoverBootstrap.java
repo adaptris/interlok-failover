@@ -2,16 +2,10 @@ package com.adaptris.failover;
 
 import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_SLAVE_NUMBER_KEY;
-import static com.adaptris.failover.util.Constants.FAILOVER_TCP_HOST_KEY;
-import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PORT_KEY;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-
-import com.adaptris.core.management.ClasspathInitialiser;
 
 public class FailoverBootstrap extends FailoverBootstrapImp {
 
@@ -50,15 +44,6 @@ public class FailoverBootstrap extends FailoverBootstrapImp {
   protected void stopFailover() {
     if(failoverManager != null)
       failoverManager.stopFailoverManager();
-  }
-  
-  public static void main(String[] arguments) throws Exception {
-    System.err.println("FailoverBootstrap is deprecated, and will be removed for Java9 support");
-    ClasspathInitialiser.init(null, false);
-    if(arguments.length != 1) {
-      doUsage();
-    } else
-      new FailoverBootstrap().doBootstrap(arguments[0]);
   }
 
   private String getPropertyValue(Properties properties, String key) {
