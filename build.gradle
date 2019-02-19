@@ -65,6 +65,8 @@ configurations.all {
 dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
+  
+  compile ("org.jgroups:jgroups:4.0.16.Final")
 
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
 

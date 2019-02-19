@@ -1,39 +1,39 @@
 package com.adaptris.failover.multicast;
 
+import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
+import static com.adaptris.failover.util.PropertiesHelper.getPropertyValue;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.adaptris.failover.Listener;
+import com.adaptris.failover.AbstractListener;
 import com.adaptris.failover.Ping;
-import com.adaptris.failover.PingEventListener;
 import com.adaptris.failover.util.PacketHelper;
 import com.adaptris.failover.util.SocketFactory;
 
-public class MulticastListener implements Listener {
-  
-  protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
-  
-  private List<PingEventListener> listeners;
+public class MulticastListener extends AbstractListener {
+    
   private MulticastSocket socket;
   private String group;
   private int port;
   private SocketFactory socketFactory;
   private volatile boolean shutdownRequested;
   
-  public MulticastListener(final String group, final int port) {
-    this.setGroup(group);
-    this.setPort(port);
+  public MulticastListener() {
+    super();
+  }
+  
+  public MulticastListener(Properties bootstrapProperties) {
+    this();
+    this.setGroup(getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY));
+    this.setPort(Integer.parseInt(getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
     
     shutdownRequested = false;
-    listeners = new ArrayList<PingEventListener>();
     this.setSocketFactory(new SocketFactory());
   }
   
@@ -112,28 +112,6 @@ public class MulticastListener implements Listener {
 
   public void setPort(int port) {
     this.port = port;
-  }
-
-  @Override
-  public void registerListener(PingEventListener eventListener) {
-    this.listeners.add(eventListener);
-  }
-
-  @Override
-  public void deregisterListener(PingEventListener eventListener) {
-    this.listeners.remove(eventListener);
-  }
-
-  @Override
-  public void sendMasterPingEvent(Ping ping) {
-    for(PingEventListener listener : this.listeners)
-      listener.masterPinged(ping);
-  }
-
-  @Override
-  public void sendSlavePingEvent(Ping ping) {
-    for(PingEventListener listener : this.listeners)
-      listener.slavePinged(ping);
   }
 
   public SocketFactory getSocketFactory() {

@@ -1,12 +1,11 @@
-package com.adaptris.failover.tcp;
+package com.adaptris.failover.jgroups;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.Properties;
 import java.util.UUID;
 
+import org.jgroups.JChannel;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -16,28 +15,34 @@ import com.adaptris.failover.util.Constants;
 
 import junit.framework.TestCase;
 
-public class TcpBroadcasterTest extends TestCase {
+public class JGroupsBroadcasterTest extends TestCase {
   
   private static final int MASTER = 1;
   private static final int SLAVE = 2;
-  private static final String PEERS = "localhost:4445";
-  private static final String HOST = "localhost";
-  private static final int HOST_PORT = 4445;
+  private static final String CLUSTER_NAME = "myClusterName";
+  private static final String CONFIG_FILE = "./myConfigFile";
+  private static final String HOST = null;
+  private static final int HOST_PORT = 0;
   
   @Mock
   private NetworkPingSender mockNetworkPingSender;
+  @Mock
+  private JChannel mockJChannel;
   
-  private TcpBroadcaster broadcaster;
+  private JGroupsBroadcaster broadcaster;
   private Ping mockMasterPing;
   private Ping mockSlavePing;
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
-    Properties props = new Properties();
-    props.put(Constants.FAILOVER_TCP_PEERS_KEY, PEERS);
+    JGroupsChannel.getInstance().setJGroupsChannel(mockJChannel);
     
-    broadcaster = new TcpBroadcaster(props);
+    Properties props = new Properties();
+    props.put(Constants.FAILOVER_JGROUPS_CONFIG_KEY, CONFIG_FILE);
+    props.put(Constants.FAILOVER_JGROUPS_CLUSTER_KEY, CLUSTER_NAME);
+    
+    broadcaster = new JGroupsBroadcaster(props);
     broadcaster.setNetworkPingSender(mockNetworkPingSender);
     
     mockMasterPing = new Ping();
@@ -71,20 +76,6 @@ public class TcpBroadcasterTest extends TestCase {
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
     verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockSlavePing);
-  }
-  
-  public void testNoSendToIncorrectHostPortConfig() throws Exception {
-    Properties props = new Properties();
-    props.put(Constants.FAILOVER_TCP_PEERS_KEY, "localhost:madeUpPort");
-    
-    broadcaster = new TcpBroadcaster(props);
-    broadcaster.setNetworkPingSender(mockNetworkPingSender);
-    broadcaster.setPingData(mockSlavePing);
-    broadcaster.start();
-    
-    Thread.sleep(4000); // first ping will be sent after 3 seconds
-    
-    verify(mockNetworkPingSender, times(0)).sendData(any(String.class), any(int.class), any(Ping.class));
   }
 
 }

@@ -62,4 +62,12 @@ public class PropertiesHelper {
     }
   }
   
+  public static String getPropertyValue(Properties properties, String key) {
+    String propertyValue = System.getProperty(key);
+    if(propertyValue == null) {
+      return properties.getProperty(key);
+    }
+    return propertyValue;
+  }
+  
 }
