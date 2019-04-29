@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.mockito.Mock;
@@ -17,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
+import com.adaptris.failover.util.Constants;
 import com.adaptris.failover.util.PacketHelper;
 import com.adaptris.failover.util.SocketFactory;
 
@@ -45,7 +47,10 @@ public class TcpListenerTest extends TestCase {
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
-    tcpListener = new TcpListener(PORT);
+    Properties props = new Properties();
+    props.put(Constants.FAILOVER_TCP_PORT_KEY, Integer.toString(PORT));
+    
+    tcpListener = new TcpListener(props);
     tcpListener.setSocketFactory(mockSocketFactory);
     
     mockMasterPing = new Ping();

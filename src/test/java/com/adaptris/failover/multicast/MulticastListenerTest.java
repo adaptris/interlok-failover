@@ -12,6 +12,7 @@ import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.mockito.Mock;
@@ -21,6 +22,7 @@ import org.mockito.stubbing.Answer;
 
 import com.adaptris.failover.Ping;
 import com.adaptris.failover.PingEventListener;
+import com.adaptris.failover.util.Constants;
 import com.adaptris.failover.util.PacketHelper;
 import com.adaptris.failover.util.SocketFactory;
 
@@ -48,7 +50,11 @@ public class MulticastListenerTest extends TestCase {
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
-    multicastListener = new MulticastListener(GROUP, PORT);
+    Properties props = new Properties();
+    props.put(Constants.FAILOVER_GROUP_KEY, GROUP);
+    props.put(Constants.FAILOVER_PORT_KEY, Integer.toString(PORT));
+    
+    multicastListener = new MulticastListener(props);
     multicastListener.setSocketFactory(mockSocketFactory);
     
     mockMasterPing = new Ping();

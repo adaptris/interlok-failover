@@ -1,10 +1,9 @@
-package com.adaptris.failover.tcp;
+package com.adaptris.failover.jgroups;
 
-import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PEERS_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_JGROUPS_CLUSTER_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_JGROUPS_CONFIG_KEY;
 import static com.adaptris.failover.util.PropertiesHelper.getPropertyValue;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
@@ -21,29 +20,34 @@ import com.adaptris.failover.NetworkPingSender;
 import com.adaptris.failover.Peer;
 import com.adaptris.failover.Ping;
 
-public class TcpBroadcaster implements Broadcaster {
-
+public class JGroupsBroadcaster implements Broadcaster {
+  
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
-
+  
   private static final int DEFAULT_SEND_DELAY_SECONDS = 3;
-
+  
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> schedulerHandle;
   private Ping pingData;
   private int sendDelaySeconds;
-  private String peersString;
-  private List<Peer> peers;
   private NetworkPingSender networkPingSender;
+  private List<Peer> peers;
+  private String jGroupsConfigFile;
+  private String jGroupsClusterName;
 
-  public TcpBroadcaster(Properties bootstrapProperties) {
+  public JGroupsBroadcaster(Properties bootstrapProperties) {
+    this.setjGroupsConfigFile(getPropertyValue(bootstrapProperties, FAILOVER_JGROUPS_CONFIG_KEY));
+    this.setjGroupsClusterName(getPropertyValue(bootstrapProperties, FAILOVER_JGROUPS_CLUSTER_KEY));
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
-    this.setPeers(new ArrayList<Peer>());
-    this.setNetworkPingSender(new DirectTcpNetworkPingSender());
-    this.setPeersString(getPropertyValue(bootstrapProperties, FAILOVER_TCP_PEERS_KEY));
+    this.setNetworkPingSender(new JGroupsNetworkPingSender());
   }
-
-  public void start() throws IOException {
-    this.setPeers(decodePeers());
+  
+  @Override
+  public void start() throws Exception {
+    JGroupsChannel jGroupsChannel = JGroupsChannel.getInstance();
+    jGroupsChannel.setConfigFileLocation(this.getjGroupsConfigFile());
+    jGroupsChannel.setClusterName(this.getjGroupsClusterName());
+    jGroupsChannel.start();
     
     scheduler = Executors.newScheduledThreadPool(1, new ThreadFactory() {
       @Override
@@ -55,12 +59,10 @@ public class TcpBroadcaster implements Broadcaster {
     final Runnable broadcastRunnable = new Runnable() {
       @Override
       public void run() {
-        for (Peer peer : getPeers()) {
-          try {
-            getNetworkPingSender().sendData(peer.getHost(), peer.getPort(), getPingData());
-          } catch (Exception e) {
-            log.warn("Remote Peer not available, ignoring: " + peer.getHost() + ":" + peer.getPort());
-          }
+        try {
+          getNetworkPingSender().sendData(null, 0, getPingData());
+        } catch (Exception e) {
+          log.warn("Error trying to broadcast to others in the cluster; continuing.", e);
         }
       }
     };
@@ -68,40 +70,19 @@ public class TcpBroadcaster implements Broadcaster {
     this.schedulerHandle = this.scheduler.scheduleWithFixedDelay(broadcastRunnable, this.getSendDelaySeconds(), this.getSendDelaySeconds(), TimeUnit.SECONDS);
   }
 
-  private List<Peer> decodePeers() {
-    List<Peer> results = new ArrayList<>();
-    
-    String[] peersSplit = this.getPeersString().split(";");
-    for(String singlePeer : peersSplit) {
-      String[] hostPortSplit = singlePeer.split(":");
-      if(hostPortSplit.length == 2) {
-        try {
-          Peer peer = new Peer(hostPortSplit[0], Integer.parseInt(hostPortSplit[1]));
-          results.add(peer);
-        } catch (Exception e) {
-          log.warn("Peer address could not be understood, ignoring: " + singlePeer);
-        }
-      } else
-        log.warn("Peer address could not be understood, ignoring: " + singlePeer); 
-      
-    }
-    return results;
-  }
-
+  @Override
   public void stop() {
     if (schedulerHandle != null) {
       this.schedulerHandle.cancel(true);
       scheduler.shutdownNow();
     }
     this.getNetworkPingSender().Stop();
+    JGroupsChannel.getInstance().stop();
   }
 
-  public int getSendDelaySeconds() {
-    return sendDelaySeconds;
-  }
-
-  public void setSendDelaySeconds(int sendDelaySeconds) {
-    this.sendDelaySeconds = sendDelaySeconds;
+  @Override
+  public List<Peer> getPeers() {
+    return peers;
   }
 
   public Ping getPingData() {
@@ -112,28 +93,36 @@ public class TcpBroadcaster implements Broadcaster {
     this.pingData = pingData;
   }
 
-  public String getPeersString() {
-    return peersString;
+  public int getSendDelaySeconds() {
+    return sendDelaySeconds;
   }
 
-  public void setPeersString(String peers) {
-    this.peersString = peers;
+  public void setSendDelaySeconds(int sendDelaySeconds) {
+    this.sendDelaySeconds = sendDelaySeconds;
   }
 
-  public List<Peer> getPeers() {
-    return peers;
-  }
-
-  public void setPeers(List<Peer> peers) {
-    this.peers = peers;
-  }
-  
   public NetworkPingSender getNetworkPingSender() {
     return networkPingSender;
   }
 
   public void setNetworkPingSender(NetworkPingSender networkPingSender) {
     this.networkPingSender = networkPingSender;
+  }
+
+  public String getjGroupsConfigFile() {
+    return jGroupsConfigFile;
+  }
+
+  public void setjGroupsConfigFile(String jGroupsConfigFile) {
+    this.jGroupsConfigFile = jGroupsConfigFile;
+  }
+
+  public String getjGroupsClusterName() {
+    return jGroupsClusterName;
+  }
+
+  public void setjGroupsClusterName(String jGroupsClusterName) {
+    this.jGroupsClusterName = jGroupsClusterName;
   }
 
 }

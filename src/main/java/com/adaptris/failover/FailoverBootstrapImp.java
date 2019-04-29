@@ -2,19 +2,14 @@ package com.adaptris.failover;
 
 import static com.adaptris.core.management.Constants.CFG_KEY_START_QUIETLY;
 import static com.adaptris.failover.util.Constants.FAILOVER_DEFAULT_RESOURCE;
-import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_PING_INTERVAL_KEY;
-import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_TCP_HOST_KEY;
-import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PEERS_KEY;
 import static com.adaptris.failover.util.Constants.FAILOVER_TCP_PORT_KEY;
-import static com.adaptris.failover.util.Constants.SOCKET_MODE;
 
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,16 +21,11 @@ import com.adaptris.core.management.VersionReport;
 import com.adaptris.core.management.logging.LoggingConfigurator;
 import com.adaptris.core.runtime.AdapterManagerMBean;
 import com.adaptris.core.util.ManagedThreadFactory;
-import com.adaptris.failover.multicast.MulticastBroadcaster;
-import com.adaptris.failover.multicast.MulticastListener;
-import com.adaptris.failover.tcp.TcpBroadcaster;
-import com.adaptris.failover.tcp.TcpListener;
+import com.adaptris.failover.SocketModeFactory.NetworkMode;
 import com.adaptris.failover.util.PropertiesHelper;
 
 public abstract class FailoverBootstrapImp implements StateChangeEventListener {
-  
-  private static final String SOCKET_MODE_TCP = "tcp";
-  
+    
   private BootstrapProperties bootProperties;
   private UnifiedBootstrap bootstrap;
   
@@ -59,14 +49,9 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
       bootstrapResource = bootstrapPropertiesResource;
       Properties bootstrapProperties = PropertiesHelper.load(bootstrapPropertiesResource, FAILOVER_DEFAULT_RESOURCE);
       
-      String socketMode = bootstrapProperties.getProperty(SOCKET_MODE);
-      if((StringUtils.isEmpty(socketMode)) || (!socketMode.equalsIgnoreCase(SOCKET_MODE_TCP))) {
-        broadcaster = new MulticastBroadcaster(this.getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY), Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
-        listener = new MulticastListener(this.getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY), Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
-      } else {
-        broadcaster = new TcpBroadcaster(this.getPropertyValue(bootstrapProperties, FAILOVER_TCP_PEERS_KEY));
-        listener = new TcpListener(Integer.parseInt(this.getPropertyValue(bootstrapProperties, FAILOVER_TCP_PORT_KEY)));
-      }
+      NetworkMode networkMode = SocketModeFactory.create(bootstrapProperties);
+      broadcaster = networkMode.getBroadcaster();
+      listener = networkMode.getListener();
       
       if(bootstrapProperties.containsKey(FAILOVER_PING_INTERVAL_KEY))
         broadcaster.setSendDelaySeconds(Integer.parseInt(bootstrapProperties.getProperty(FAILOVER_PING_INTERVAL_KEY)));
@@ -88,14 +73,6 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
   protected abstract void startFailover(Properties bootstrapProperties);
   
   protected abstract void stopFailover();
-  
-  private String getPropertyValue(Properties properties, String key) {
-    String propertyValue = System.getProperty(key);
-    if(propertyValue == null) {
-      return properties.getProperty(key);
-    }
-    return propertyValue;
-  }
   
   @Override
   public void adapterStopped() {

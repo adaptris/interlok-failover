@@ -26,5 +26,9 @@ public class Constants {
   
   public static final String FAILOVER_INSTANCE_TIMEOUT_KEY = "failover.instance.timeout.seconds";
   
+  public static final String FAILOVER_JGROUPS_CONFIG_KEY = "failover.jgroups.config.file";
+  
+  public static final String FAILOVER_JGROUPS_CLUSTER_KEY = "failover.jgroups.cluster.name";
+  
   public static final String FAILOVER_DEFAULT_RESOURCE = com.adaptris.core.management.Constants.DEFAULT_PROPS_RESOURCE;
 }

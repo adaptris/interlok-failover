@@ -1,8 +1,13 @@
 package com.adaptris.failover.multicast;
 
+import static com.adaptris.failover.util.Constants.FAILOVER_GROUP_KEY;
+import static com.adaptris.failover.util.Constants.FAILOVER_PORT_KEY;
+import static com.adaptris.failover.util.PropertiesHelper.getPropertyValue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -33,9 +38,9 @@ public class MulticastBroadcaster implements Broadcaster {
   private List<Peer> peers;
   private NetworkPingSender networkPingSender;
   
-  public MulticastBroadcaster(final String group, final int port) {
-    this.setGroup(group);
-    this.setPort(port);
+  public MulticastBroadcaster(Properties bootstrapProperties) {
+    this.setGroup(getPropertyValue(bootstrapProperties, FAILOVER_GROUP_KEY));
+    this.setPort(Integer.parseInt(getPropertyValue(bootstrapProperties, FAILOVER_PORT_KEY)));
     this.setSendDelaySeconds(DEFAULT_SEND_DELAY_SECONDS);
     this.setNetworkPingSender(new MulticastNetworkPingSender());
     this.setPeers(new ArrayList<>());

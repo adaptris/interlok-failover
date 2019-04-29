@@ -4,6 +4,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.mockito.Mock;
@@ -11,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.adaptris.failover.NetworkPingSender;
 import com.adaptris.failover.Ping;
+import com.adaptris.failover.util.Constants;
 
 import junit.framework.TestCase;
 
@@ -31,7 +33,11 @@ public class MulticastBroadcasterTest extends TestCase {
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
     
-    broadcaster = new MulticastBroadcaster(GROUP, PORT);
+    Properties props = new Properties();
+    props.put(Constants.FAILOVER_GROUP_KEY, GROUP);
+    props.put(Constants.FAILOVER_PORT_KEY, Integer.toString(PORT));
+    
+    broadcaster = new MulticastBroadcaster(props);
     broadcaster.setNetworkPingSender(mockNetworkPingSender);
     
     mockMasterPing = new Ping();
