@@ -92,7 +92,7 @@ dependencies {
 
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
 
-  testCompile ('junit:junit:4.12')
+  testCompile ('junit:junit:4.13')
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
 
   testCompile ("org.mockito:mockito-all:1.9.5")
