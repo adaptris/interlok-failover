@@ -5,7 +5,7 @@ import static com.adaptris.failover.util.Constants.FAILOVER_SLAVE_NUMBER_KEY;
 
 import java.util.Properties;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class FailoverBootstrap extends FailoverBootstrapImp {
 
