@@ -164,7 +164,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     }
     
     if(needToAssignNumbers) {
-      // we're going to use the UUID, order those to decide the order of the secondarys.
+      // we're going to use the UUID, order those to decide the order of the secondaries.
       String[] instanceIds = new String[this.getInstances().size() + 1];
       for(int counter = 0; counter < this.getInstances().size(); counter ++)
         instanceIds[counter] = this.getInstances().get(counter).getId().toString();
@@ -211,12 +211,12 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     if(this.getCurrentPrimary() == null)
       this.setCurrentPrimary(new OnlineInstance(ping.getInstanceId()));
     
-    // see if we need to remove the primary from the list of secondarys.
+    // see if we need to remove the primary from the list of secondaries.
     synchronized(this.getInstances()) {
       for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
         if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
           if (Constants.DEBUG && log.isTraceEnabled())
-            log.debug("Removing new primary ({}) from list of secondarys.", ping.getInstanceId().toString()); 
+            log.debug("Removing new primary ({}) from list of secondaries.", ping.getInstanceId().toString()); 
           
           this.getInstances().remove(counter);
         }
@@ -278,7 +278,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       if (getMyInstance().getInstanceType() == SECONDARY) {
         builder.append("primary", getCurrentPrimary());
       }
-      builder.append("secondarys", getInstances());
+      builder.append("secondaries", getInstances());
       log.trace(builder.toString());
     }
   }
