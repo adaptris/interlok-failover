@@ -104,8 +104,8 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
     }
   }
   
-  public void promoteSlave(int position) {
-    log.info("Promoting slave to position " + position);
+  public void promoteSecondary(int position) {
+    log.info("Promoting secondary to position " + position);
   }
   
   public class FailoverShutdownHandler extends Thread {

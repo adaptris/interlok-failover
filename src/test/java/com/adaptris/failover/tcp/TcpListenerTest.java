@@ -26,13 +26,13 @@ import junit.framework.TestCase;
 
 public class TcpListenerTest extends TestCase {
   
-  private static final int SLAVE = 2;
+  private static final int SECONDARY = 2;
   private static final int MASTER = 1;
   
   private static final int PORT = 1;
   
   private Ping mockMasterPing;
-  private Ping mockSlavePing;
+  private Ping mockSecondaryPing;
   
   private TcpListener tcpListener;
   @Mock
@@ -56,16 +56,16 @@ public class TcpListenerTest extends TestCase {
     mockMasterPing = new Ping();
     mockMasterPing.setInstanceId(UUID.randomUUID());
     mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSlaveNumber(0);
+    mockMasterPing.setSecondaryNumber(0);
     mockMasterPing.setSourceHost("myHost");
     mockMasterPing.setSourcePort("1111");
     
-    mockSlavePing = new Ping();
-    mockSlavePing.setInstanceId(UUID.randomUUID());
-    mockSlavePing.setInstanceType(SLAVE);
-    mockSlavePing.setSlaveNumber(1);
-    mockSlavePing.setSourceHost("myHost");
-    mockSlavePing.setSourcePort("1111");
+    mockSecondaryPing = new Ping();
+    mockSecondaryPing.setInstanceId(UUID.randomUUID());
+    mockSecondaryPing.setInstanceType(SECONDARY);
+    mockSecondaryPing.setSecondaryNumber(1);
+    mockSecondaryPing.setSourceHost("myHost");
+    mockSecondaryPing.setSourcePort("1111");
     
     when(mockSocketFactory.createServerSocket(PORT))
         .thenReturn(mockServerSocket);
@@ -90,18 +90,18 @@ public class TcpListenerTest extends TestCase {
     verify(mockPingEventListener).masterPinged(any(Ping.class));
   }
   
-  public void testReceiveSlavePing() throws Exception {
+  public void testReceiveSecondaryPing() throws Exception {
     when(mockServerSocket.accept())
         .thenReturn(mockSocket);
     when(mockSocket.getInputStream())
-        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockSlavePing)));
+        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockSecondaryPing)));
     
     tcpListener.registerListener(mockPingEventListener);
     tcpListener.start();
     
     Thread.sleep(3000);
     
-    verify(mockPingEventListener).slavePinged(any(Ping.class));
+    verify(mockPingEventListener).secondaryPinged(any(Ping.class));
   }
   
   public void testReceiveErrorOnReadPacketIsHandled() throws Exception {
@@ -127,7 +127,7 @@ public class TcpListenerTest extends TestCase {
     
     Thread.sleep(1000);
     
-    verify(mockPingEventListener, times(0)).slavePinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).secondaryPinged(any(Ping.class));
     verify(mockPingEventListener, times(0)).masterPinged(any(Ping.class));
   }
   

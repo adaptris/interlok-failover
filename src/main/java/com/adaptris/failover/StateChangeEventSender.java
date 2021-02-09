@@ -4,7 +4,7 @@ public interface StateChangeEventSender {
 
   public void notifyPromoteToMaster();
   
-  public void notifyPromoteSlave();
+  public void notifyPromoteSecondary();
   
   public void notifyAdapterStopped();
   

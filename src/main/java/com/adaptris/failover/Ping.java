@@ -10,10 +10,10 @@ public class Ping {
   
   private String sourcePort;
   
-  // 1 = Master, 2 = Slave
+  // 1 = Master, 2 = Secondary
   private int instanceType;
   
-  private int slaveNumber;
+  private int secondaryNumber;
   
   public Ping() {
   }
@@ -26,12 +26,12 @@ public class Ping {
     this.instanceId = instanceId;
   }
 
-  public int getSlaveNumber() {
-    return slaveNumber;
+  public int getSecondaryNumber() {
+    return secondaryNumber;
   }
 
-  public void setSlaveNumber(int slaveNumber) {
-    this.slaveNumber = slaveNumber;
+  public void setSecondaryNumber(int secondaryNumber) {
+    this.secondaryNumber = secondaryNumber;
   }
 
   public int getInstanceType() {
@@ -62,9 +62,9 @@ public class Ping {
     StringBuffer sb = new StringBuffer();
     sb.append(this.getInstanceId().toString());
     sb.append(" :: ");
-    sb.append(this.getInstanceType() == 1 ? "MASTER" : "SLAVE");
+    sb.append(this.getInstanceType() == 1 ? "MASTER" : "SECONDARY");
     sb.append(" :: ");
-    sb.append("Slave number: " + this.getSlaveNumber());
+    sb.append("Secondary number: " + this.getSecondaryNumber());
     sb.append(" :: ");
     sb.append("Source host: " + this.getSourceHost());
     sb.append(" :: ");

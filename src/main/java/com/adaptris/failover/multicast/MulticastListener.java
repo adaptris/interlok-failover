@@ -95,7 +95,7 @@ public class MulticastListener extends AbstractListener {
     if(PacketHelper.isMasterPing(pingRecord))
       this.sendMasterPingEvent(pingRecord);
     else
-      this.sendSlavePingEvent(pingRecord);
+      this.sendSecondaryPingEvent(pingRecord);
   }
 
   public String getGroup() {

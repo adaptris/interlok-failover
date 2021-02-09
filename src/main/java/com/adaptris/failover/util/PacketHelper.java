@@ -41,7 +41,7 @@ public class PacketHelper {
     long littleBits = byteBuffer.getLong();
     ping.setInstanceId(new UUID(bigBits, littleBits));
     ping.setInstanceType(byteBuffer.getInt());
-    ping.setSlaveNumber(byteBuffer.getInt());
+    ping.setSecondaryNumber(byteBuffer.getInt());
     
     return ping;
   }
@@ -59,7 +59,7 @@ public class PacketHelper {
     byteBuffer.putLong(ping.getInstanceId().getMostSignificantBits());
     byteBuffer.putLong(ping.getInstanceId().getLeastSignificantBits());
     byteBuffer.putInt(ping.getInstanceType());
-    byteBuffer.putInt(ping.getSlaveNumber());
+    byteBuffer.putInt(ping.getSecondaryNumber());
     
     return byteBuffer.array();
   }

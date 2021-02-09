@@ -1,7 +1,7 @@
 package com.adaptris.failover;
 
 import static com.adaptris.failover.util.Constants.MASTER;
-import static com.adaptris.failover.util.Constants.SLAVE;
+import static com.adaptris.failover.util.Constants.SECONDARY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   private MultiMasterConflictHandler multiMasterConflictHandler;
   
-  public FailoverManager(String myHost, String myPort, Listener listener, Broadcaster broadcaster, boolean master, int slavePosition) {
+  public FailoverManager(String myHost, String myPort, Listener listener, Broadcaster broadcaster, boolean master, int secondaryPosition) {
     this.listener = listener;
     this.listener.registerListener(this);
     
@@ -63,14 +63,14 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       this.getCurrentMaster().setInstanceType(MASTER);
       this.setMyInstance(this.getCurrentMaster());
       myOutgoingPing.setInstanceType(MASTER);
-      myOutgoingPing.setSlaveNumber(0);
+      myOutgoingPing.setSecondaryNumber(0);
     } else {
       this.setMyInstance(new OnlineInstance(getUniqueId()));
-      this.getMyInstance().setInstanceType(SLAVE);
-      myOutgoingPing.setInstanceType(SLAVE);
-      if(slavePosition > 0) {
-        this.getMyInstance().setSlaveNumber(slavePosition);
-        myOutgoingPing.setSlaveNumber(slavePosition);
+      this.getMyInstance().setInstanceType(SECONDARY);
+      myOutgoingPing.setInstanceType(SECONDARY);
+      if(secondaryPosition > 0) {
+        this.getMyInstance().setSecondaryNumber(secondaryPosition);
+        myOutgoingPing.setSecondaryNumber(secondaryPosition);
       }
     }
   }
@@ -78,60 +78,60 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   @Override
   public void pollTriggered() {
     if(this.getMyInstance().getInstanceType() != MASTER) { // if we are master, we don't need to do anything
-      if(!this.assignSlaveNumber()) { // if we don't have to assign slave numbers continue, otherwise assign and wait for next poll.
+      if(!this.assignSecondaryNumber()) { // if we don't have to assign secondary numbers continue, otherwise assign and wait for next poll.
         checkPromotion();
       }
     }
-    purgeOldSlaveInstances();
+    purgeOldSecondaryInstances();
     
     logState();
   }
 
-  private void purgeOldSlaveInstances() {
+  private void purgeOldSecondaryInstances() {
     for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
       if(timedOut(this.getInstances().get(counter).getLastContact())) {
-        log.info("Removing timed out slave: {}", this.getInstances().get(counter).getId().toString());
+        log.info("Removing timed out secondary: {}", this.getInstances().get(counter).getId().toString());
         this.getInstances().remove(counter);
       }
     }
   }
 
   private void checkPromotion() {
-    if(this.getMyInstance().getSlaveNumber() == 1) {
+    if(this.getMyInstance().getSecondaryNumber() == 1) {
       if(masterNotAvailable()) {
         log.trace("Master not available, promoting myself to master.");
         this.getMyInstance().setInstanceType(MASTER);
         myOutgoingPing.setInstanceType(MASTER);
-        myOutgoingPing.setSlaveNumber(0);
+        myOutgoingPing.setSecondaryNumber(0);
         this.broadcaster.setPingData(myOutgoingPing);
-        this.getMyInstance().setSlaveNumber(0);
+        this.getMyInstance().setSecondaryNumber(0);
         this.setCurrentMaster(this.getMyInstance());
         
         this.notifyPromoteToMaster();
       }
-    } else { // do we need to promote this slave?
-      if(slaveNotAvailable(this.getMyInstance().getSlaveNumber() - 1)) {
-        log.trace("Slave ({}) not available, promoting self", (this.getMyInstance().getSlaveNumber() - 1));
-        this.getMyInstance().setSlaveNumber(this.getMyInstance().getSlaveNumber() - 1);
-        myOutgoingPing.setSlaveNumber(this.getMyInstance().getSlaveNumber());
+    } else { // do we need to promote this secondary?
+      if(secondaryNotAvailable(this.getMyInstance().getSecondaryNumber() - 1)) {
+        log.trace("Secondary ({}) not available, promoting self", (this.getMyInstance().getSecondaryNumber() - 1));
+        this.getMyInstance().setSecondaryNumber(this.getMyInstance().getSecondaryNumber() - 1);
+        myOutgoingPing.setSecondaryNumber(this.getMyInstance().getSecondaryNumber());
         this.broadcaster.setPingData(myOutgoingPing);
-        this.notifyPromoteSlave();
+        this.notifyPromoteSecondary();
       }
     }
   }
 
-  private boolean slaveNotAvailable(int slaveNumber) {
-    OnlineInstance slaveInstance = null;
+  private boolean secondaryNotAvailable(int secondaryNumber) {
+    OnlineInstance secondaryInstance = null;
     for(OnlineInstance instance : instances) {
-      if(instance.getSlaveNumber() == slaveNumber) { 
-        slaveInstance = instance;
+      if(instance.getSecondaryNumber() == secondaryNumber) { 
+        secondaryInstance = instance;
         break;
       }
     }
-    if(slaveInstance != null) {
-      return timedOut(slaveInstance.getLastContact()); 
+    if(secondaryInstance != null) {
+      return timedOut(secondaryInstance.getLastContact()); 
     } else 
-      return true; // we can't find this slave, it may have been purged.
+      return true; // we can't find this secondary, it may have been purged.
   }
 
   private boolean masterNotAvailable() {
@@ -145,17 +145,17 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     return (lastContact < (System.currentTimeMillis() - (this.getInstanceTimeoutSeconds() * 1000)));
   }
   
-  private boolean assignSlaveNumber() {
+  private boolean assignSecondaryNumber() {
     boolean needToAssignNumbers = false;
     
-    if(this.getMyInstance().getSlaveNumber() == 0)
+    if(this.getMyInstance().getSecondaryNumber() == 0)
       needToAssignNumbers = true;
     
     if(!needToAssignNumbers) {
       for(OnlineInstance instance : this.getInstances()) {
-        // if any instances do not have a slave number, or if it is the same as ours, lets re-assign.
+        // if any instances do not have a secondary number, or if it is the same as ours, lets re-assign.
         if(instance.getInstanceType() != MASTER) {
-          if((instance.getSlaveNumber() == 0) || instance.getSlaveNumber() == this.getMyInstance().getSlaveNumber()) {
+          if((instance.getSecondaryNumber() == 0) || instance.getSecondaryNumber() == this.getMyInstance().getSecondaryNumber()) {
             needToAssignNumbers = true;
             break;
           }
@@ -164,7 +164,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     }
     
     if(needToAssignNumbers) {
-      // we're going to use the UUID, order those to decide the order of the slaves.
+      // we're going to use the UUID, order those to decide the order of the secondarys.
       String[] instanceIds = new String[this.getInstances().size() + 1];
       for(int counter = 0; counter < this.getInstances().size(); counter ++)
         instanceIds[counter] = this.getInstances().get(counter).getId().toString();
@@ -174,9 +174,9 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       Arrays.sort(instanceIds);
       for(int counter = 0; counter < instanceIds.length; counter ++) {
         if(instanceIds[counter].equals(this.getMyInstance().getId().toString())) {
-          log.debug("Assigning myself slave position {}", (counter + 1));
-          this.getMyInstance().setSlaveNumber(counter + 1);
-          myOutgoingPing.setSlaveNumber(counter + 1);
+          log.debug("Assigning myself secondary position {}", (counter + 1));
+          this.getMyInstance().setSecondaryNumber(counter + 1);
+          myOutgoingPing.setSecondaryNumber(counter + 1);
           this.broadcaster.setPingData(myOutgoingPing);
           break;
         }
@@ -211,12 +211,12 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     if(this.getCurrentMaster() == null)
       this.setCurrentMaster(new OnlineInstance(ping.getInstanceId()));
     
-    // see if we need to remove the master from the list of slaves.
+    // see if we need to remove the master from the list of secondarys.
     synchronized(this.getInstances()) {
       for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
         if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
           if (Constants.DEBUG && log.isTraceEnabled())
-            log.debug("Removing new master ({}) from list of slaves.", ping.getInstanceId().toString()); 
+            log.debug("Removing new master ({}) from list of secondarys.", ping.getInstanceId().toString()); 
           
           this.getInstances().remove(counter);
         }
@@ -230,23 +230,23 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       this.getCurrentMaster().setId(ping.getInstanceId());
       this.getCurrentMaster().setInstanceType(MASTER);
       this.getCurrentMaster().setLastContact(System.currentTimeMillis());
-      this.getCurrentMaster().setSlaveNumber(ping.getSlaveNumber());
+      this.getCurrentMaster().setSecondaryNumber(ping.getSecondaryNumber());
     }
   }
 
   @Override
-  public void slavePinged(Ping ping) {
+  public void secondaryPinged(Ping ping) {
     if(ping.getInstanceId().equals(this.getMyInstance().getId())) {
       this.getMyInstance().setLastContact(System.currentTimeMillis());
     } else {
       OnlineInstance pingSource = this.getInstanceFromPing(ping);
       if(pingSource ==  null) {
         pingSource = new OnlineInstance(ping.getInstanceId());
-        pingSource.setInstanceType(SLAVE);
+        pingSource.setInstanceType(SECONDARY);
         this.getInstances().add(pingSource);
       }
       pingSource.setLastContact(System.currentTimeMillis());
-      pingSource.setSlaveNumber(ping.getSlaveNumber());
+      pingSource.setSecondaryNumber(ping.getSecondaryNumber());
       
       // check to see if our broadcaster needs to know about this peer.
       Peer peer = new Peer(ping.getSourceHost(), Integer.parseInt(ping.getSourcePort()));
@@ -275,10 +275,10 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   private void logState() {
     if (Constants.DEBUG && log.isTraceEnabled()) {
       ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).append("Self", getMyInstance());
-      if (getMyInstance().getInstanceType() == SLAVE) {
+      if (getMyInstance().getInstanceType() == SECONDARY) {
         builder.append("master", getCurrentMaster());
       }
-      builder.append("slaves", getInstances());
+      builder.append("secondarys", getInstances());
       log.trace(builder.toString());
     }
   }
@@ -298,9 +298,9 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       changeEventListener.promoteToMaster();
   }
   
-  public void notifyPromoteSlave() {
+  public void notifyPromoteSecondary() {
     for(StateChangeEventListener changeEventListener : this.listeners)
-      changeEventListener.promoteSlave(this.getMyInstance().getSlaveNumber());
+      changeEventListener.promoteSecondary(this.getMyInstance().getSecondaryNumber());
   }
 
   @Override

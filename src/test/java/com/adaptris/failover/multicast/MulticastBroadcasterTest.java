@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 public class MulticastBroadcasterTest extends TestCase {
   
   private static final int MASTER = 1;
-  private static final int SLAVE = 2;
+  private static final int SECONDARY = 2;
   private static final String GROUP = "204.0.0.1";
   private static final int PORT = 1;
   
@@ -28,7 +28,7 @@ public class MulticastBroadcasterTest extends TestCase {
   
   private MulticastBroadcaster broadcaster;
   private Ping mockMasterPing;
-  private Ping mockSlavePing;
+  private Ping mockSecondaryPing;
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
@@ -43,12 +43,12 @@ public class MulticastBroadcasterTest extends TestCase {
     mockMasterPing = new Ping();
     mockMasterPing.setInstanceId(UUID.randomUUID());
     mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSlaveNumber(0);
+    mockMasterPing.setSecondaryNumber(0);
     
-    mockSlavePing = new Ping();
-    mockSlavePing.setInstanceId(UUID.randomUUID());
-    mockSlavePing.setInstanceType(SLAVE);
-    mockSlavePing.setSlaveNumber(1);
+    mockSecondaryPing = new Ping();
+    mockSecondaryPing.setInstanceId(UUID.randomUUID());
+    mockSecondaryPing.setInstanceType(SECONDARY);
+    mockSecondaryPing.setSecondaryNumber(1);
   }
   
   public void tearDown() throws Exception {
@@ -64,13 +64,13 @@ public class MulticastBroadcasterTest extends TestCase {
     verify(mockNetworkPingSender).sendData(GROUP, PORT, mockMasterPing);
   }
   
-  public void testSendSlavePing() throws Exception {
-    broadcaster.setPingData(mockSlavePing);
+  public void testSendSecondaryPing() throws Exception {
+    broadcaster.setPingData(mockSecondaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
-    verify(mockNetworkPingSender).sendData(GROUP, PORT, mockSlavePing);
+    verify(mockNetworkPingSender).sendData(GROUP, PORT, mockSecondaryPing);
   }
   
   public void testStartupError() throws Exception {

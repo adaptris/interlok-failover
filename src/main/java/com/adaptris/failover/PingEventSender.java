@@ -8,6 +8,6 @@ public interface PingEventSender {
   
   public void sendMasterPingEvent(Ping ping);
   
-  public void sendSlavePingEvent(Ping ping);
+  public void sendSecondaryPingEvent(Ping ping);
 
 }

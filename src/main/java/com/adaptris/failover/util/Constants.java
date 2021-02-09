@@ -6,7 +6,7 @@ public class Constants {
 
   public static final int MASTER = 1;
   
-  public static final int SLAVE = 2;
+  public static final int SECONDARY = 2;
   
   public static final String SOCKET_MODE = "failover.socket.mode";
   
@@ -20,7 +20,7 @@ public class Constants {
   
   public static final String FAILOVER_PORT_KEY = "failover.multicast.port";
   
-  public static final String FAILOVER_SLAVE_NUMBER_KEY = "failover.slave.position";
+  public static final String FAILOVER_SECONDARY_NUMBER_KEY = "failover.secondary.position";
   
   public static final String FAILOVER_PING_INTERVAL_KEY = "failover.ping.interval.seconds";
   

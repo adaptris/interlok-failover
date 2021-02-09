@@ -4,7 +4,7 @@ public interface PingEventListener {
   
   public void masterPinged(Ping ping);
   
-  public void slavePinged(Ping ping);
+  public void secondaryPinged(Ping ping);
   
   public boolean equals(PingEventListener eventListener);
 

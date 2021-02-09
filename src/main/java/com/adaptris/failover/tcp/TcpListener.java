@@ -85,7 +85,7 @@ public class TcpListener extends AbstractListener {
     if(PacketHelper.isMasterPing(pingRecord))
       this.sendMasterPingEvent(pingRecord);
     else
-      this.sendSlavePingEvent(pingRecord);
+      this.sendSecondaryPingEvent(pingRecord);
   }
 
   public int getPort() {

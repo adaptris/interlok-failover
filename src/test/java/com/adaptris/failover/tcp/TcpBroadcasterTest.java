@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 public class TcpBroadcasterTest extends TestCase {
   
   private static final int MASTER = 1;
-  private static final int SLAVE = 2;
+  private static final int SECONDARY = 2;
   private static final String PEERS = "localhost:4445";
   private static final String HOST = "localhost";
   private static final int HOST_PORT = 4445;
@@ -29,7 +29,7 @@ public class TcpBroadcasterTest extends TestCase {
   
   private TcpBroadcaster broadcaster;
   private Ping mockMasterPing;
-  private Ping mockSlavePing;
+  private Ping mockSecondaryPing;
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
@@ -43,12 +43,12 @@ public class TcpBroadcasterTest extends TestCase {
     mockMasterPing = new Ping();
     mockMasterPing.setInstanceId(UUID.randomUUID());
     mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSlaveNumber(0);
+    mockMasterPing.setSecondaryNumber(0);
     
-    mockSlavePing = new Ping();
-    mockSlavePing.setInstanceId(UUID.randomUUID());
-    mockSlavePing.setInstanceType(SLAVE);
-    mockSlavePing.setSlaveNumber(1);
+    mockSecondaryPing = new Ping();
+    mockSecondaryPing.setInstanceId(UUID.randomUUID());
+    mockSecondaryPing.setInstanceType(SECONDARY);
+    mockSecondaryPing.setSecondaryNumber(1);
   }
   
   public void tearDown() throws Exception {
@@ -64,13 +64,13 @@ public class TcpBroadcasterTest extends TestCase {
     verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockMasterPing);
   }
   
-  public void testSendSlavePing() throws Exception {
-    broadcaster.setPingData(mockSlavePing);
+  public void testSendSecondaryPing() throws Exception {
+    broadcaster.setPingData(mockSecondaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
-    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockSlavePing);
+    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockSecondaryPing);
   }
   
   public void testNoSendToIncorrectHostPortConfig() throws Exception {
@@ -79,7 +79,7 @@ public class TcpBroadcasterTest extends TestCase {
     
     broadcaster = new TcpBroadcaster(props);
     broadcaster.setNetworkPingSender(mockNetworkPingSender);
-    broadcaster.setPingData(mockSlavePing);
+    broadcaster.setPingData(mockSecondaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
