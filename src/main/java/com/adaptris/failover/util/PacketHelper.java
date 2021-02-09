@@ -1,6 +1,6 @@
 package com.adaptris.failover.util;
 
-import static com.adaptris.failover.util.Constants.MASTER;
+import static com.adaptris.failover.util.Constants.PRIMARY;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -18,8 +18,8 @@ public class PacketHelper {
   
   private static final int MAX_PORT_LENGTH = 6;
   
-  public static boolean isMasterPing(Ping ping) {
-    return ping.getInstanceType() == MASTER;
+  public static boolean isPrimaryPing(Ping ping) {
+    return ping.getInstanceType() == PRIMARY;
   }
   
   public static Ping createPingRecord(DatagramPacket datagramPacket) {

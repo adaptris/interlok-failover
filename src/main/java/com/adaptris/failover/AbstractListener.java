@@ -17,9 +17,9 @@ public abstract class AbstractListener implements Listener {
   }
   
   @Override
-  public void sendMasterPingEvent(Ping ping) {
+  public void sendPrimaryPingEvent(Ping ping) {
     for(PingEventListener listener : this.getListeners())
-      listener.masterPinged(ping);
+      listener.primaryPinged(ping);
   }
 
   @Override

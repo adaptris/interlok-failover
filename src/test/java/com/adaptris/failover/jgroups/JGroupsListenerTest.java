@@ -21,12 +21,12 @@ import junit.framework.TestCase;
 public class JGroupsListenerTest extends TestCase {
   
   private static final int SECONDARY = 2;
-  private static final int MASTER = 1;
+  private static final int PRIMARY = 1;
     
   private static final String CLUSTER_NAME = "myClusterName";
   private static final String CONFIG_FILE = "./myConfigFile";
   
-  private Ping mockMasterPing;
+  private Ping mockPrimaryPing;
   private Ping mockSecondaryPing;
     
   private JGroupsListener jGroupsListener;
@@ -46,12 +46,12 @@ public class JGroupsListenerTest extends TestCase {
     
     jGroupsListener = new JGroupsListener(props);
         
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSecondaryNumber(0);
-    mockMasterPing.setSourceHost("myHost");
-    mockMasterPing.setSourcePort("1111");
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
+    mockPrimaryPing.setSourceHost("myHost");
+    mockPrimaryPing.setSourcePort("1111");
     
     mockSecondaryPing = new Ping();
     mockSecondaryPing.setInstanceId(UUID.randomUUID());
@@ -67,15 +67,15 @@ public class JGroupsListenerTest extends TestCase {
     jGroupsListener.stop();
   }
   
-  public void testReceiveMasterPing() throws Exception {
+  public void testReceivePrimaryPing() throws Exception {
     jGroupsListener.registerListener(mockPingEventListener);
     jGroupsListener.start();
     
-    jGroupsListener.receive(new Message(null, PacketHelper.createDataPacket(mockMasterPing)));
+    jGroupsListener.receive(new Message(null, PacketHelper.createDataPacket(mockPrimaryPing)));
     
     Thread.sleep(3000);
     
-    verify(mockPingEventListener).masterPinged(any(Ping.class));
+    verify(mockPingEventListener).primaryPinged(any(Ping.class));
   }
   
   public void testReceiveSecondaryPing() throws Exception {

@@ -2,7 +2,7 @@ package com.adaptris.failover;
 
 public interface StateChangeEventSender {
 
-  public void notifyPromoteToMaster();
+  public void notifyPromoteToPrimary();
   
   public void notifyPromoteSecondary();
   

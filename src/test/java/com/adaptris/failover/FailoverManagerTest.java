@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 
 public class FailoverManagerTest extends TestCase {
   
-  private static final int MASTER = 1;
+  private static final int PRIMARY = 1;
   private static final int SECONDARY = 2;
   
   private static final String UUID1 = "11111111-1111-1111-1111-111111111111";
@@ -28,9 +28,9 @@ public class FailoverManagerTest extends TestCase {
   @Mock
   private StateChangeEventListener mockStateChangeEventListener;
   @Mock
-  private MultiMasterConflictHandler mockMultiMasterConflictHandler;
+  private MultiPrimaryConflictHandler mockMultiPrimaryConflictHandler;
   
-  private Ping mockMasterPing;
+  private Ping mockPrimaryPing;
   
   private Ping mockSecondaryPing;
   
@@ -39,14 +39,14 @@ public class FailoverManagerTest extends TestCase {
     failoverManager = new FailoverManager("myHost", "1111", mockListener, mockBroadcaster, false, 0);
     failoverManager.setPollingThread(mockMonitorThread);
     failoverManager.registerListener(mockStateChangeEventListener);
-    failoverManager.setMultiMasterConflictHandler(mockMultiMasterConflictHandler);
+    failoverManager.setMultiPrimaryConflictHandler(mockMultiPrimaryConflictHandler);
     
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSecondaryNumber(0);
-    mockMasterPing.setSourceHost("myHost");
-    mockMasterPing.setSourcePort("1111");
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
+    mockPrimaryPing.setSourceHost("myHost");
+    mockPrimaryPing.setSourcePort("1111");
     
     mockSecondaryPing = new Ping();
     mockSecondaryPing.setInstanceId(UUID.randomUUID());
@@ -87,7 +87,7 @@ public class FailoverManagerTest extends TestCase {
     failoverManager.stop();
   }
   
-  public void testSecondaryPromotedToMaster() throws Exception {
+  public void testSecondaryPromotedToPrimary() throws Exception {
     assertEquals(0, failoverManager.getMyInstance().getSecondaryNumber());
     
     failoverManager.start();
@@ -97,15 +97,15 @@ public class FailoverManagerTest extends TestCase {
     assertEquals(1, failoverManager.getMyInstance().getSecondaryNumber());
     assertEquals(SECONDARY, failoverManager.getMyInstance().getInstanceType());
     
-    // simulate another polling trigger which should recognise no master and promote us.
+    // simulate another polling trigger which should recognise no primary and promote us.
     failoverManager.pollTriggered();
     
-    assertEquals(MASTER, failoverManager.getMyInstance().getInstanceType());
+    assertEquals(PRIMARY, failoverManager.getMyInstance().getInstanceType());
     
     failoverManager.stop();
   }
   
-  public void testMasterPingedStayAsSecondary() throws Exception {
+  public void testPrimaryPingedStayAsSecondary() throws Exception {
     assertEquals(0, failoverManager.getMyInstance().getSecondaryNumber());
     
     failoverManager.start();
@@ -115,11 +115,11 @@ public class FailoverManagerTest extends TestCase {
     assertEquals(1, failoverManager.getMyInstance().getSecondaryNumber());
     assertEquals(SECONDARY, failoverManager.getMyInstance().getInstanceType());
     
-    failoverManager.masterPinged(mockMasterPing);
+    failoverManager.primaryPinged(mockPrimaryPing);
     
     // simulate another polling trigger
     failoverManager.pollTriggered();
-    // Master now exists, check we have NOT been promoted.
+    // Primary now exists, check we have NOT been promoted.
     assertEquals(1, failoverManager.getMyInstance().getSecondaryNumber());
     assertEquals(SECONDARY, failoverManager.getMyInstance().getInstanceType());
     
@@ -151,33 +151,33 @@ public class FailoverManagerTest extends TestCase {
     failoverManager.stop();
   }
   
-  public void testMasterConflictHandled() throws Exception {
-    // make sure we are master
+  public void testPrimaryConflictHandled() throws Exception {
+    // make sure we are primary
     failoverManager = new FailoverManager("myHost", "1111", mockListener, mockBroadcaster, true, 0);
     failoverManager.setPollingThread(mockMonitorThread);
     failoverManager.registerListener(mockStateChangeEventListener);
-    failoverManager.setMultiMasterConflictHandler(mockMultiMasterConflictHandler);
+    failoverManager.setMultiPrimaryConflictHandler(mockMultiPrimaryConflictHandler);
     
     failoverManager.start();
     
     // simulate a polling trigger
     failoverManager.pollTriggered();
-    // check we are master
+    // check we are primary
     assertEquals(0, failoverManager.getMyInstance().getSecondaryNumber());
-    assertEquals(MASTER, failoverManager.getMyInstance().getInstanceType());
+    assertEquals(PRIMARY, failoverManager.getMyInstance().getInstanceType());
     
-    // now ping ourselves from a fictitious other instance that thinks its the master!
-    failoverManager.masterPinged(mockMasterPing);
+    // now ping ourselves from a fictitious other instance that thinks its the primary!
+    failoverManager.primaryPinged(mockPrimaryPing);
     
     // simulate another polling trigger
     failoverManager.pollTriggered();
     
     failoverManager.stop();
     // Make sure the conflict handler ran
-    verify(mockMultiMasterConflictHandler).handle(failoverManager.getMyInstance(), mockMasterPing);
+    verify(mockMultiPrimaryConflictHandler).handle(failoverManager.getMyInstance(), mockPrimaryPing);
   }
   
-  public void testSecondaryPromotedToMasterThenConflictHandler() throws Exception {
+  public void testSecondaryPromotedToPrimaryThenConflictHandler() throws Exception {
     assertEquals(0, failoverManager.getMyInstance().getSecondaryNumber());
     
     failoverManager.start();
@@ -187,13 +187,13 @@ public class FailoverManagerTest extends TestCase {
     assertEquals(1, failoverManager.getMyInstance().getSecondaryNumber());
     assertEquals(SECONDARY, failoverManager.getMyInstance().getInstanceType());
     
-    // simulate another polling trigger which should recognise no master and promote us.
+    // simulate another polling trigger which should recognise no primary and promote us.
     failoverManager.pollTriggered();
     
-    assertEquals(MASTER, failoverManager.getMyInstance().getInstanceType());
+    assertEquals(PRIMARY, failoverManager.getMyInstance().getInstanceType());
     
-    // now ping ourselves from a fictitious other instance that thinks its the master!
-    failoverManager.masterPinged(mockMasterPing);
+    // now ping ourselves from a fictitious other instance that thinks its the primary!
+    failoverManager.primaryPinged(mockPrimaryPing);
     
     // simulate another polling trigger
     failoverManager.pollTriggered();
@@ -201,7 +201,7 @@ public class FailoverManagerTest extends TestCase {
     failoverManager.stop();
     
     // Make sure the conflict handler ran
-    verify(mockMultiMasterConflictHandler).handle(failoverManager.getMyInstance(), mockMasterPing);
+    verify(mockMultiPrimaryConflictHandler).handle(failoverManager.getMyInstance(), mockPrimaryPing);
   }
 
 }

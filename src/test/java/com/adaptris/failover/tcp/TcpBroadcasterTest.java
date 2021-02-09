@@ -18,7 +18,7 @@ import junit.framework.TestCase;
 
 public class TcpBroadcasterTest extends TestCase {
   
-  private static final int MASTER = 1;
+  private static final int PRIMARY = 1;
   private static final int SECONDARY = 2;
   private static final String PEERS = "localhost:4445";
   private static final String HOST = "localhost";
@@ -28,7 +28,7 @@ public class TcpBroadcasterTest extends TestCase {
   private NetworkPingSender mockNetworkPingSender;
   
   private TcpBroadcaster broadcaster;
-  private Ping mockMasterPing;
+  private Ping mockPrimaryPing;
   private Ping mockSecondaryPing;
   
   public void setUp() throws Exception {
@@ -40,10 +40,10 @@ public class TcpBroadcasterTest extends TestCase {
     broadcaster = new TcpBroadcaster(props);
     broadcaster.setNetworkPingSender(mockNetworkPingSender);
     
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSecondaryNumber(0);
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
     
     mockSecondaryPing = new Ping();
     mockSecondaryPing.setInstanceId(UUID.randomUUID());
@@ -55,13 +55,13 @@ public class TcpBroadcasterTest extends TestCase {
     broadcaster.stop();
   }
 
-  public void testSendMasterPing() throws Exception {
-    broadcaster.setPingData(mockMasterPing);
+  public void testSendPrimaryPing() throws Exception {
+    broadcaster.setPingData(mockPrimaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
-    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockMasterPing);
+    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockPrimaryPing);
   }
   
   public void testSendSecondaryPing() throws Exception {

@@ -1,6 +1,6 @@
 package com.adaptris.failover;
 
-import static com.adaptris.failover.util.Constants.MASTER;
+import static com.adaptris.failover.util.Constants.PRIMARY;
 import static com.adaptris.failover.util.Constants.SECONDARY;
 
 import java.util.ArrayList;
@@ -28,16 +28,16 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   private MonitorThread pollingThread;
   
   private OnlineInstance myInstance;
-  private OnlineInstance currentMaster;
+  private OnlineInstance currentPrimary;
   private volatile List<OnlineInstance> instances;
   
   private Ping myOutgoingPing;
   
   private int instanceTimeoutSeconds;
   
-  private MultiMasterConflictHandler multiMasterConflictHandler;
+  private MultiPrimaryConflictHandler multiPrimaryConflictHandler;
   
-  public FailoverManager(String myHost, String myPort, Listener listener, Broadcaster broadcaster, boolean master, int secondaryPosition) {
+  public FailoverManager(String myHost, String myPort, Listener listener, Broadcaster broadcaster, boolean primary, int secondaryPosition) {
     this.listener = listener;
     this.listener.registerListener(this);
     
@@ -48,7 +48,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     instanceTimeoutSeconds = DEFAULT_INSTANCE_TIMEOUT_SECONDS;
     
     this.setPollingThread(new MonitorThread(this));
-    this.setMultiMasterConflictHandler(new ExitMultiMasterConflictHandler());
+    this.setMultiPrimaryConflictHandler(new ExitMultiPrimaryConflictHandler());
     
     listeners = new ArrayList<StateChangeEventListener>();
     this.setInstances(new ArrayList<OnlineInstance>());
@@ -58,11 +58,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     myOutgoingPing.setSourceHost(myHost);
     myOutgoingPing.setSourcePort(myPort);
     
-    if(master) {
-      this.setCurrentMaster(new OnlineInstance(this.getUniqueId()));
-      this.getCurrentMaster().setInstanceType(MASTER);
-      this.setMyInstance(this.getCurrentMaster());
-      myOutgoingPing.setInstanceType(MASTER);
+    if(primary) {
+      this.setCurrentPrimary(new OnlineInstance(this.getUniqueId()));
+      this.getCurrentPrimary().setInstanceType(PRIMARY);
+      this.setMyInstance(this.getCurrentPrimary());
+      myOutgoingPing.setInstanceType(PRIMARY);
       myOutgoingPing.setSecondaryNumber(0);
     } else {
       this.setMyInstance(new OnlineInstance(getUniqueId()));
@@ -77,7 +77,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   
   @Override
   public void pollTriggered() {
-    if(this.getMyInstance().getInstanceType() != MASTER) { // if we are master, we don't need to do anything
+    if(this.getMyInstance().getInstanceType() != PRIMARY) { // if we are primary, we don't need to do anything
       if(!this.assignSecondaryNumber()) { // if we don't have to assign secondary numbers continue, otherwise assign and wait for next poll.
         checkPromotion();
       }
@@ -98,16 +98,16 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
 
   private void checkPromotion() {
     if(this.getMyInstance().getSecondaryNumber() == 1) {
-      if(masterNotAvailable()) {
-        log.trace("Master not available, promoting myself to master.");
-        this.getMyInstance().setInstanceType(MASTER);
-        myOutgoingPing.setInstanceType(MASTER);
+      if(primaryNotAvailable()) {
+        log.trace("Primary not available, promoting myself to primary.");
+        this.getMyInstance().setInstanceType(PRIMARY);
+        myOutgoingPing.setInstanceType(PRIMARY);
         myOutgoingPing.setSecondaryNumber(0);
         this.broadcaster.setPingData(myOutgoingPing);
         this.getMyInstance().setSecondaryNumber(0);
-        this.setCurrentMaster(this.getMyInstance());
+        this.setCurrentPrimary(this.getMyInstance());
         
-        this.notifyPromoteToMaster();
+        this.notifyPromoteToPrimary();
       }
     } else { // do we need to promote this secondary?
       if(secondaryNotAvailable(this.getMyInstance().getSecondaryNumber() - 1)) {
@@ -134,11 +134,11 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
       return true; // we can't find this secondary, it may have been purged.
   }
 
-  private boolean masterNotAvailable() {
-    if(this.getCurrentMaster() == null)
+  private boolean primaryNotAvailable() {
+    if(this.getCurrentPrimary() == null)
       return true;
     else
-      return timedOut(this.getCurrentMaster().getLastContact());
+      return timedOut(this.getCurrentPrimary().getLastContact());
   }
 
   private boolean timedOut(long lastContact) {
@@ -154,7 +154,7 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     if(!needToAssignNumbers) {
       for(OnlineInstance instance : this.getInstances()) {
         // if any instances do not have a secondary number, or if it is the same as ours, lets re-assign.
-        if(instance.getInstanceType() != MASTER) {
+        if(instance.getInstanceType() != PRIMARY) {
           if((instance.getSecondaryNumber() == 0) || instance.getSecondaryNumber() == this.getMyInstance().getSecondaryNumber()) {
             needToAssignNumbers = true;
             break;
@@ -207,30 +207,30 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   @Override
-  public void masterPinged(Ping ping) {
-    if(this.getCurrentMaster() == null)
-      this.setCurrentMaster(new OnlineInstance(ping.getInstanceId()));
+  public void primaryPinged(Ping ping) {
+    if(this.getCurrentPrimary() == null)
+      this.setCurrentPrimary(new OnlineInstance(ping.getInstanceId()));
     
-    // see if we need to remove the master from the list of secondarys.
+    // see if we need to remove the primary from the list of secondarys.
     synchronized(this.getInstances()) {
       for(int counter = this.getInstances().size() - 1; counter >= 0; counter --) {
         if(this.getInstances().get(counter).getId().equals(ping.getInstanceId())) {
           if (Constants.DEBUG && log.isTraceEnabled())
-            log.debug("Removing new master ({}) from list of secondarys.", ping.getInstanceId().toString()); 
+            log.debug("Removing new primary ({}) from list of secondarys.", ping.getInstanceId().toString()); 
           
           this.getInstances().remove(counter);
         }
       }
     }
     
-    if(this.getCurrentMaster().getId().equals(uniqueId)) { // we are master!
-      if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are master
-        handleMasterConflict(this.getMyInstance(), ping);
+    if(this.getCurrentPrimary().getId().equals(uniqueId)) { // we are primary!
+      if(!ping.getInstanceId().equals(getUniqueId())) // someone else thinks they are primary
+        handlePrimaryConflict(this.getMyInstance(), ping);
     } else {
-      this.getCurrentMaster().setId(ping.getInstanceId());
-      this.getCurrentMaster().setInstanceType(MASTER);
-      this.getCurrentMaster().setLastContact(System.currentTimeMillis());
-      this.getCurrentMaster().setSecondaryNumber(ping.getSecondaryNumber());
+      this.getCurrentPrimary().setId(ping.getInstanceId());
+      this.getCurrentPrimary().setInstanceType(PRIMARY);
+      this.getCurrentPrimary().setLastContact(System.currentTimeMillis());
+      this.getCurrentPrimary().setSecondaryNumber(ping.getSecondaryNumber());
     }
   }
 
@@ -267,16 +267,16 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     return returnedInstance;
   }
 
-  private void handleMasterConflict(OnlineInstance onlineInstance, Ping ping) {
-    log.warn("Another instance is already master, shutting down");
-    this.getMultiMasterConflictHandler().handle(onlineInstance, ping);
+  private void handlePrimaryConflict(OnlineInstance onlineInstance, Ping ping) {
+    log.warn("Another instance is already primary, shutting down");
+    this.getMultiPrimaryConflictHandler().handle(onlineInstance, ping);
   }
   
   private void logState() {
     if (Constants.DEBUG && log.isTraceEnabled()) {
       ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE).append("Self", getMyInstance());
       if (getMyInstance().getInstanceType() == SECONDARY) {
-        builder.append("master", getCurrentMaster());
+        builder.append("primary", getCurrentPrimary());
       }
       builder.append("secondarys", getInstances());
       log.trace(builder.toString());
@@ -293,9 +293,9 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
   }
 
   @Override
-  public void notifyPromoteToMaster() {
+  public void notifyPromoteToPrimary() {
     for(StateChangeEventListener changeEventListener : this.listeners)
-      changeEventListener.promoteToMaster();
+      changeEventListener.promoteToPrimary();
   }
   
   public void notifyPromoteSecondary() {
@@ -346,12 +346,12 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     this.myInstance = myInstance;
   }
 
-  public OnlineInstance getCurrentMaster() {
-    return currentMaster;
+  public OnlineInstance getCurrentPrimary() {
+    return currentPrimary;
   }
 
-  public void setCurrentMaster(OnlineInstance currentMaster) {
-    this.currentMaster = currentMaster;
+  public void setCurrentPrimary(OnlineInstance currentPrimary) {
+    this.currentPrimary = currentPrimary;
   }
 
   public List<OnlineInstance> getInstances() {
@@ -362,12 +362,12 @@ public class FailoverManager implements PingEventListener, StateChangeEventSende
     this.instances = instances;
   }
 
-  public MultiMasterConflictHandler getMultiMasterConflictHandler() {
-    return multiMasterConflictHandler;
+  public MultiPrimaryConflictHandler getMultiPrimaryConflictHandler() {
+    return multiPrimaryConflictHandler;
   }
 
-  public void setMultiMasterConflictHandler(MultiMasterConflictHandler multiMasterConflictHandler) {
-    this.multiMasterConflictHandler = multiMasterConflictHandler;
+  public void setMultiPrimaryConflictHandler(MultiPrimaryConflictHandler multiPrimaryConflictHandler) {
+    this.multiPrimaryConflictHandler = multiPrimaryConflictHandler;
   }
 
 }

@@ -31,12 +31,12 @@ import junit.framework.TestCase;
 public class MulticastListenerTest extends TestCase {
   
   private static final int SECONDARY = 2;
-  private static final int MASTER = 1;
+  private static final int PRIMARY = 1;
   
   private static final String GROUP = "204.0.0.1";
   private static final int PORT = 1;
   
-  private Ping mockMasterPing;
+  private Ping mockPrimaryPing;
   private Ping mockSecondaryPing;
   
   private MulticastListener multicastListener;
@@ -57,12 +57,12 @@ public class MulticastListenerTest extends TestCase {
     multicastListener = new MulticastListener(props);
     multicastListener.setSocketFactory(mockSocketFactory);
     
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSecondaryNumber(0);
-    mockMasterPing.setSourceHost("myHost");
-    mockMasterPing.setSourcePort("1111");
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
+    mockPrimaryPing.setSourceHost("myHost");
+    mockPrimaryPing.setSourcePort("1111");
     
     mockSecondaryPing = new Ping();
     mockSecondaryPing.setInstanceId(UUID.randomUUID());
@@ -80,13 +80,13 @@ public class MulticastListenerTest extends TestCase {
     multicastListener.stop();
   }
   
-  public void testReceiveMasterPing() throws Exception {
+  public void testReceivePrimaryPing() throws Exception {
     // when we call receive, set the datagram packet to our mocked one.
     doAnswer(new Answer() {
       public Object answer(InvocationOnMock invocation) {
           DatagramPacket arg = (DatagramPacket) invocation.getArguments()[0];
           try {
-            arg.setData(PacketHelper.createDataPacket(mockMasterPing)); 
+            arg.setData(PacketHelper.createDataPacket(mockPrimaryPing)); 
             multicastListener.stop(); // stop it looping forever, trying to receive more packets
           } catch (UnknownHostException e) {
             fail(e.getMessage());
@@ -101,7 +101,7 @@ public class MulticastListenerTest extends TestCase {
     
     Thread.sleep(1000);
     
-    verify(mockPingEventListener).masterPinged(any(Ping.class));
+    verify(mockPingEventListener).primaryPinged(any(Ping.class));
   }
   
   public void testReceiveSecondaryPing() throws Exception {
@@ -143,7 +143,7 @@ public class MulticastListenerTest extends TestCase {
     Thread.sleep(1000);
     
     verify(mockPingEventListener, times(0)).secondaryPinged(any(Ping.class));
-    verify(mockPingEventListener, times(0)).masterPinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).primaryPinged(any(Ping.class));
   }
   
   public void testReceiveIoExceptionReconnect() throws Exception {

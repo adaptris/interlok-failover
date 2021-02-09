@@ -6,7 +6,7 @@ public interface PingEventSender {
   
   public void deregisterListener(PingEventListener eventListener);
   
-  public void sendMasterPingEvent(Ping ping);
+  public void sendPrimaryPingEvent(Ping ping);
   
   public void sendSecondaryPingEvent(Ping ping);
 

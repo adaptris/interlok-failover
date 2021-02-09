@@ -1,6 +1,6 @@
 package com.adaptris.failover;
 
-public class ExitMultiMasterConflictHandler implements MultiMasterConflictHandler {
+public class ExitMultiPrimaryConflictHandler implements MultiPrimaryConflictHandler {
 
   @Override
   public void handle(OnlineInstance onlineInstance, Ping ping) {

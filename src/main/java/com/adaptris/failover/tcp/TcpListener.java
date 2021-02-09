@@ -82,8 +82,8 @@ public class TcpListener extends AbstractListener {
 
   private void sendPingEvent(byte[] data) {
     Ping pingRecord = PacketHelper.createPingRecord(data);
-    if(PacketHelper.isMasterPing(pingRecord))
-      this.sendMasterPingEvent(pingRecord);
+    if(PacketHelper.isPrimaryPing(pingRecord))
+      this.sendPrimaryPingEvent(pingRecord);
     else
       this.sendSecondaryPingEvent(pingRecord);
   }

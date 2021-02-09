@@ -10,7 +10,7 @@ public class Ping {
   
   private String sourcePort;
   
-  // 1 = Master, 2 = Secondary
+  // 1 = Primary, 2 = Secondary
   private int instanceType;
   
   private int secondaryNumber;
@@ -62,7 +62,7 @@ public class Ping {
     StringBuffer sb = new StringBuffer();
     sb.append(this.getInstanceId().toString());
     sb.append(" :: ");
-    sb.append(this.getInstanceType() == 1 ? "MASTER" : "SECONDARY");
+    sb.append(this.getInstanceType() == 1 ? "PRIMARY" : "SECONDARY");
     sb.append(" :: ");
     sb.append("Secondary number: " + this.getSecondaryNumber());
     sb.append(" :: ");

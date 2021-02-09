@@ -67,7 +67,7 @@ public class OnlineInstance {
   
   public String toString() {
     return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("ID", getId())
-        .append("Type", getInstanceType() == Constants.MASTER ? "master" : "secondary").append("Position", getSecondaryNumber())
+        .append("Type", getInstanceType() == Constants.PRIMARY ? "primary" : "secondary").append("Position", getSecondaryNumber())
         .append("last", new Date(getLastContact()))
         .toString();
   }

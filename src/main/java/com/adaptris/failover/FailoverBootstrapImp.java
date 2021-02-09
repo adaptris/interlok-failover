@@ -89,9 +89,9 @@ public abstract class FailoverBootstrapImp implements StateChangeEventListener {
     }
   }
   
-  public void promoteToMaster() {
+  public void promoteToPrimary() {
     try {
-      log.info("Promoting to MASTER");
+      log.info("Promoting to PRIMARY");
       
       boolean startQuietly = Boolean.valueOf(bootProperties.getProperty(CFG_KEY_START_QUIETLY, "true")).booleanValue();
       bootstrap.init(adapterMBean);

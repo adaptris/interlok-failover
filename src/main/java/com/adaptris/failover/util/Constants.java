@@ -4,7 +4,7 @@ public class Constants {
   
   public static final boolean DEBUG = Boolean.getBoolean("interlok.failover.debug");
 
-  public static final int MASTER = 1;
+  public static final int PRIMARY = 1;
   
   public static final int SECONDARY = 2;
   
