@@ -11,8 +11,8 @@ public class PacketHelperTest extends TestCase {
   
   private static final String GROUP = "204.0.0.1";
   private static final int PORT = 4444;
-  private static final int SLAVE = 2;
-  private static final int MASTER = 1;
+  private static final int SECONDARY = 2;
+  private static final int PRIMARY = 1;
   
   private UUID uuid;
   
@@ -26,8 +26,8 @@ public class PacketHelperTest extends TestCase {
   public void testTcpPacketRoundTrip() throws Exception {
     Ping pingRecord = new Ping();
     pingRecord.setInstanceId(uuid);
-    pingRecord.setInstanceType(MASTER);
-    pingRecord.setSlaveNumber(5);
+    pingRecord.setInstanceType(PRIMARY);
+    pingRecord.setSecondaryNumber(5);
     pingRecord.setSourceHost("myHost");
     pingRecord.setSourcePort("1111");
     
@@ -37,15 +37,15 @@ public class PacketHelperTest extends TestCase {
     
     assertEquals(pingRecord.getInstanceId(), roundTripPingRecord.getInstanceId());
     assertEquals(pingRecord.getInstanceType(), roundTripPingRecord.getInstanceType());
-    assertEquals(pingRecord.getSlaveNumber(), roundTripPingRecord.getSlaveNumber());
-    assertTrue(PacketHelper.isMasterPing(roundTripPingRecord));
+    assertEquals(pingRecord.getSecondaryNumber(), roundTripPingRecord.getSecondaryNumber());
+    assertTrue(PacketHelper.isPrimaryPing(roundTripPingRecord));
   }
   
   public void testUdpPacketRoundTrip() throws Exception {
     Ping pingRecord = new Ping();
     pingRecord.setInstanceId(uuid);
-    pingRecord.setInstanceType(SLAVE);
-    pingRecord.setSlaveNumber(5);
+    pingRecord.setInstanceType(SECONDARY);
+    pingRecord.setSecondaryNumber(5);
     pingRecord.setSourceHost("myHost");
     pingRecord.setSourcePort("1111");
     
@@ -55,8 +55,8 @@ public class PacketHelperTest extends TestCase {
     
     assertEquals(pingRecord.getInstanceId(), roundTripPingRecord.getInstanceId());
     assertEquals(pingRecord.getInstanceType(), roundTripPingRecord.getInstanceType());
-    assertEquals(pingRecord.getSlaveNumber(), roundTripPingRecord.getSlaveNumber());
-    assertFalse(PacketHelper.isMasterPing(roundTripPingRecord));
+    assertEquals(pingRecord.getSecondaryNumber(), roundTripPingRecord.getSecondaryNumber());
+    assertFalse(PacketHelper.isPrimaryPing(roundTripPingRecord));
   }
 
 }

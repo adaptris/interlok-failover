@@ -4,13 +4,13 @@ import static com.adaptris.failover.util.Constants.FAILOVER_INSTANCE_TIMEOUT_KEY
 
 import java.util.Properties;
 
-public class FailoverMasterBootstrap extends FailoverBootstrapImp {
+public class FailoverPrimaryBootstrap extends FailoverBootstrapImp {
 
   private FailoverManager failoverManager;
   
   @Override
   protected void startFailover(Properties bootstrapProperties) {
-    log.info("Starting Interlok instance in failover mode as the master.");
+    log.info("Starting Interlok instance in failover mode as the primary.");
     
     try {
       failoverManager = new FailoverManager(this.determineMyHost(bootstrapProperties), this.determineMyPort(bootstrapProperties), listener, broadcaster, true, 0);
@@ -22,7 +22,7 @@ public class FailoverMasterBootstrap extends FailoverBootstrapImp {
       
       AdapterEventListener.createInstance(failoverManager);
       
-      promoteToMaster();
+      promoteToPrimary();
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);

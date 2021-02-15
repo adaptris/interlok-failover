@@ -1,6 +1,6 @@
 package com.adaptris.failover.util;
 
-import static com.adaptris.failover.util.Constants.MASTER;
+import static com.adaptris.failover.util.Constants.PRIMARY;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -18,8 +18,8 @@ public class PacketHelper {
   
   private static final int MAX_PORT_LENGTH = 6;
   
-  public static boolean isMasterPing(Ping ping) {
-    return ping.getInstanceType() == MASTER;
+  public static boolean isPrimaryPing(Ping ping) {
+    return ping.getInstanceType() == PRIMARY;
   }
   
   public static Ping createPingRecord(DatagramPacket datagramPacket) {
@@ -41,7 +41,7 @@ public class PacketHelper {
     long littleBits = byteBuffer.getLong();
     ping.setInstanceId(new UUID(bigBits, littleBits));
     ping.setInstanceType(byteBuffer.getInt());
-    ping.setSlaveNumber(byteBuffer.getInt());
+    ping.setSecondaryNumber(byteBuffer.getInt());
     
     return ping;
   }
@@ -59,7 +59,7 @@ public class PacketHelper {
     byteBuffer.putLong(ping.getInstanceId().getMostSignificantBits());
     byteBuffer.putLong(ping.getInstanceId().getLeastSignificantBits());
     byteBuffer.putInt(ping.getInstanceType());
-    byteBuffer.putInt(ping.getSlaveNumber());
+    byteBuffer.putInt(ping.getSecondaryNumber());
     
     return byteBuffer.array();
   }

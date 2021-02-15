@@ -1,6 +1,6 @@
 package com.adaptris.failover;
 
-public interface MultiMasterConflictHandler {
+public interface MultiPrimaryConflictHandler {
 
   void handle(OnlineInstance onlineInstance, Ping ping);
   

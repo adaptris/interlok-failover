@@ -26,13 +26,13 @@ import junit.framework.TestCase;
 
 public class TcpListenerTest extends TestCase {
   
-  private static final int SLAVE = 2;
-  private static final int MASTER = 1;
+  private static final int SECONDARY = 2;
+  private static final int PRIMARY = 1;
   
   private static final int PORT = 1;
   
-  private Ping mockMasterPing;
-  private Ping mockSlavePing;
+  private Ping mockPrimaryPing;
+  private Ping mockSecondaryPing;
   
   private TcpListener tcpListener;
   @Mock
@@ -53,19 +53,19 @@ public class TcpListenerTest extends TestCase {
     tcpListener = new TcpListener(props);
     tcpListener.setSocketFactory(mockSocketFactory);
     
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSlaveNumber(0);
-    mockMasterPing.setSourceHost("myHost");
-    mockMasterPing.setSourcePort("1111");
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
+    mockPrimaryPing.setSourceHost("myHost");
+    mockPrimaryPing.setSourcePort("1111");
     
-    mockSlavePing = new Ping();
-    mockSlavePing.setInstanceId(UUID.randomUUID());
-    mockSlavePing.setInstanceType(SLAVE);
-    mockSlavePing.setSlaveNumber(1);
-    mockSlavePing.setSourceHost("myHost");
-    mockSlavePing.setSourcePort("1111");
+    mockSecondaryPing = new Ping();
+    mockSecondaryPing.setInstanceId(UUID.randomUUID());
+    mockSecondaryPing.setInstanceType(SECONDARY);
+    mockSecondaryPing.setSecondaryNumber(1);
+    mockSecondaryPing.setSourceHost("myHost");
+    mockSecondaryPing.setSourcePort("1111");
     
     when(mockSocketFactory.createServerSocket(PORT))
         .thenReturn(mockServerSocket);
@@ -76,32 +76,32 @@ public class TcpListenerTest extends TestCase {
     tcpListener.stop();
   }
   
-  public void testReceiveMasterPing() throws Exception {
+  public void testReceivePrimaryPing() throws Exception {
     when(mockServerSocket.accept())
         .thenReturn(mockSocket);
     when(mockSocket.getInputStream())
-        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockMasterPing)));
+        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockPrimaryPing)));
     
     tcpListener.registerListener(mockPingEventListener);
     tcpListener.start();
     
     Thread.sleep(3000);
     
-    verify(mockPingEventListener).masterPinged(any(Ping.class));
+    verify(mockPingEventListener).primaryPinged(any(Ping.class));
   }
   
-  public void testReceiveSlavePing() throws Exception {
+  public void testReceiveSecondaryPing() throws Exception {
     when(mockServerSocket.accept())
         .thenReturn(mockSocket);
     when(mockSocket.getInputStream())
-        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockSlavePing)));
+        .thenReturn(new ByteArrayInputStream(PacketHelper.createDataPacket(mockSecondaryPing)));
     
     tcpListener.registerListener(mockPingEventListener);
     tcpListener.start();
     
     Thread.sleep(3000);
     
-    verify(mockPingEventListener).slavePinged(any(Ping.class));
+    verify(mockPingEventListener).secondaryPinged(any(Ping.class));
   }
   
   public void testReceiveErrorOnReadPacketIsHandled() throws Exception {
@@ -115,8 +115,8 @@ public class TcpListenerTest extends TestCase {
     
     Thread.sleep(1000);
     
-    verify(mockPingEventListener, times(0)).masterPinged(any(Ping.class));
-    verify(mockPingEventListener, times(0)).masterPinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).primaryPinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).primaryPinged(any(Ping.class));
   }
   
   public void testReceiveTimesout() throws Exception {
@@ -127,8 +127,8 @@ public class TcpListenerTest extends TestCase {
     
     Thread.sleep(1000);
     
-    verify(mockPingEventListener, times(0)).slavePinged(any(Ping.class));
-    verify(mockPingEventListener, times(0)).masterPinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).secondaryPinged(any(Ping.class));
+    verify(mockPingEventListener, times(0)).primaryPinged(any(Ping.class));
   }
   
   public void testReceiveIoExceptionReconnect() throws Exception {
