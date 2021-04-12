@@ -92,10 +92,10 @@ public class MulticastListener extends AbstractListener {
 
   private void sendPingEvent(DatagramPacket packet) {
     Ping pingRecord = PacketHelper.createPingRecord(packet);
-    if(PacketHelper.isMasterPing(pingRecord))
-      this.sendMasterPingEvent(pingRecord);
+    if(PacketHelper.isPrimaryPing(pingRecord))
+      this.sendPrimaryPingEvent(pingRecord);
     else
-      this.sendSlavePingEvent(pingRecord);
+      this.sendSecondaryPingEvent(pingRecord);
   }
 
   public String getGroup() {

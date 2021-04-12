@@ -17,8 +17,8 @@ import junit.framework.TestCase;
 
 public class JGroupsBroadcasterTest extends TestCase {
   
-  private static final int MASTER = 1;
-  private static final int SLAVE = 2;
+  private static final int PRIMARY = 1;
+  private static final int SECONDARY = 2;
   private static final String CLUSTER_NAME = "myClusterName";
   private static final String CONFIG_FILE = "./myConfigFile";
   private static final String HOST = null;
@@ -30,8 +30,8 @@ public class JGroupsBroadcasterTest extends TestCase {
   private JChannel mockJChannel;
   
   private JGroupsBroadcaster broadcaster;
-  private Ping mockMasterPing;
-  private Ping mockSlavePing;
+  private Ping mockPrimaryPing;
+  private Ping mockSecondaryPing;
   
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
@@ -45,37 +45,37 @@ public class JGroupsBroadcasterTest extends TestCase {
     broadcaster = new JGroupsBroadcaster(props);
     broadcaster.setNetworkPingSender(mockNetworkPingSender);
     
-    mockMasterPing = new Ping();
-    mockMasterPing.setInstanceId(UUID.randomUUID());
-    mockMasterPing.setInstanceType(MASTER);
-    mockMasterPing.setSlaveNumber(0);
+    mockPrimaryPing = new Ping();
+    mockPrimaryPing.setInstanceId(UUID.randomUUID());
+    mockPrimaryPing.setInstanceType(PRIMARY);
+    mockPrimaryPing.setSecondaryNumber(0);
     
-    mockSlavePing = new Ping();
-    mockSlavePing.setInstanceId(UUID.randomUUID());
-    mockSlavePing.setInstanceType(SLAVE);
-    mockSlavePing.setSlaveNumber(1);
+    mockSecondaryPing = new Ping();
+    mockSecondaryPing.setInstanceId(UUID.randomUUID());
+    mockSecondaryPing.setInstanceType(SECONDARY);
+    mockSecondaryPing.setSecondaryNumber(1);
   }
   
   public void tearDown() throws Exception {
     broadcaster.stop();
   }
 
-  public void testSendMasterPing() throws Exception {
-    broadcaster.setPingData(mockMasterPing);
+  public void testSendPrimaryPing() throws Exception {
+    broadcaster.setPingData(mockPrimaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
-    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockMasterPing);
+    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockPrimaryPing);
   }
   
-  public void testSendSlavePing() throws Exception {
-    broadcaster.setPingData(mockSlavePing);
+  public void testSendSecondaryPing() throws Exception {
+    broadcaster.setPingData(mockSecondaryPing);
     broadcaster.start();
     
     Thread.sleep(4000); // first ping will be sent after 3 seconds
     
-    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockSlavePing);
+    verify(mockNetworkPingSender).sendData(HOST, HOST_PORT, mockSecondaryPing);
   }
 
 }

@@ -19,7 +19,7 @@ public class OnlineInstance {
   
   private long lastContact;
   
-  private int slaveNumber;
+  private int secondaryNumber;
   
   public OnlineInstance(UUID id) {
     this.setId(id);
@@ -57,17 +57,17 @@ public class OnlineInstance {
     return false;
   }
 
-  public int getSlaveNumber() {
-    return slaveNumber;
+  public int getSecondaryNumber() {
+    return secondaryNumber;
   }
 
-  public void setSlaveNumber(int slaveNumber) {
-    this.slaveNumber = slaveNumber;
+  public void setSecondaryNumber(int secondaryNumber) {
+    this.secondaryNumber = secondaryNumber;
   }
   
   public String toString() {
     return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("ID", getId())
-        .append("Type", getInstanceType() == Constants.MASTER ? "master" : "slave").append("Position", getSlaveNumber())
+        .append("Type", getInstanceType() == Constants.PRIMARY ? "primary" : "secondary").append("Position", getSecondaryNumber())
         .append("last", new Date(getLastContact()))
         .toString();
   }
