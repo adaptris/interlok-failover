@@ -23,8 +23,8 @@ ext {
   componentDesc='Starting Interlok as part of a failover cluster'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '1.7.30'
-  mockitoVersion = '3.11.1'
+  slf4jVersion = '1.7.31'
+  mockitoVersion = '3.11.2'
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
