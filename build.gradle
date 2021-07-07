@@ -217,6 +217,7 @@ publishing {
         properties.appendNode("target", "3.6.6+")
         properties.appendNode("tags", "failover")
         properties.appendNode("license", "false")
+        properties.appendNode("repository", "https://github.com/adaptris/interlok-failover")
       }
     }
   }
