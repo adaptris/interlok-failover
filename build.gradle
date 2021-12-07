@@ -221,7 +221,7 @@ publishing {
       pom.withXml {
         asNode().appendNode("name", componentName)
         asNode().appendNode("description", componentDesc)
-        asNode().appendNode("url", "http://interlok.adaptris.net/interlok-docs/advanced-failover.html")
+		asNode().appendNode("url", "http://interlok.adaptris.net/interlok-docs/advanced-failover.html")
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.6.6+")
         properties.appendNode("tags", "failover")
