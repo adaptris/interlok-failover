@@ -1,13 +1,15 @@
 package com.adaptris.failover;
 
+import java.util.Objects;
+
 public class Peer {
-  
+
   private String host;
   private int port;
-  
+
   public Peer(String host, int port) {
-    this.setHost(host);
-    this.setPort(port);
+    setHost(host);
+    setPort(port);
   }
 
   public String getHost() {
@@ -25,14 +27,23 @@ public class Peer {
   public void setPort(int port) {
     this.port = port;
   }
-  
+
+  @Override
   public boolean equals(Object object) {
     if(object instanceof Peer) {
-      if((((Peer) object).getHost().equals(this.getHost()))
-          && (((Peer) object).getPort() == this.getPort()))
+      if(((Peer) object).getHost().equals(getHost())
+          && ((Peer) object).getPort() == getPort()) {
         return true;
-    } else
+      }
+    } else {
       return false;
+    }
     return false;
   }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getHost(), getPort());
+  }
+
 }
