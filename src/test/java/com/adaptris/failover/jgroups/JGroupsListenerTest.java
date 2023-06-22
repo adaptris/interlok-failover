@@ -6,8 +6,8 @@ import static org.mockito.Mockito.verify;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.jgroups.BytesMessage;
 import org.jgroups.JChannel;
-import org.jgroups.Message;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,7 +77,7 @@ public class JGroupsListenerTest {
     jGroupsListener.registerListener(mockPingEventListener);
     jGroupsListener.start();
 
-    jGroupsListener.receive(new Message(null, PacketHelper.createDataPacket(mockPrimaryPing)));
+    jGroupsListener.receive(new BytesMessage(null, PacketHelper.createDataPacket(mockPrimaryPing)));
 
     Thread.sleep(3000);
 
@@ -89,7 +89,7 @@ public class JGroupsListenerTest {
     jGroupsListener.registerListener(mockPingEventListener);
     jGroupsListener.start();
 
-    jGroupsListener.receive(new Message(null, PacketHelper.createDataPacket(mockSecondaryPing)));
+    jGroupsListener.receive(new BytesMessage(null, PacketHelper.createDataPacket(mockSecondaryPing)));
 
     Thread.sleep(3000);
 
