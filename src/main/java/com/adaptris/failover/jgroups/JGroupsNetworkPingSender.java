@@ -1,6 +1,6 @@
 package com.adaptris.failover.jgroups;
 
-import org.jgroups.Message;
+import org.jgroups.BytesMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,14 +11,15 @@ import com.adaptris.failover.util.PacketHelper;
 public class JGroupsNetworkPingSender implements NetworkPingSender {
 
   protected transient Logger log = LoggerFactory.getLogger(this.getClass().getName());
-  
+
   @Override
   public void sendData(String host, int port, Ping data) throws Exception {
     JGroupsChannel jGroupsChannel = JGroupsChannel.getInstance();
-    if(jGroupsChannel.getJGroupsChannel().isConnected())
-      jGroupsChannel.getJGroupsChannel().send(new Message(null, PacketHelper.createDataPacket(data)));
-    else
+    if (jGroupsChannel.getJGroupsChannel().isConnected()) {
+      jGroupsChannel.getJGroupsChannel().send(new BytesMessage(null, PacketHelper.createDataPacket(data)));
+    } else {
       log.warn("JGroupsChannel not connected, therefore skipping the send.");
+    }
   }
 
   @Override
@@ -30,4 +31,5 @@ public class JGroupsNetworkPingSender implements NetworkPingSender {
   public void initialize(String host, int port) throws Exception {
     // do nothing
   }
+
 }
