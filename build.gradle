@@ -2,9 +2,9 @@ plugins {
   id "java-library"
   id "maven-publish"
   id "jacoco"
-  id "com.github.spotbugs" version "6.0.6"
+  id "com.github.spotbugs" version "6.0.14"
   id "org.sonarqube" version "4.4.1.3373"
-  id "org.owasp.dependencycheck" version "9.0.8"
+  id "org.owasp.dependencycheck" version "9.0.10"
 }
 
 ext {
@@ -24,7 +24,7 @@ ext {
   componentDesc='Starting Interlok as part of a failover cluster'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '2.0.11'
+  slf4jVersion = '2.0.13'
   mockitoVersion = '5.2.0'
 }
 
@@ -120,13 +120,13 @@ dependencies {
   api ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   api ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
 
-  api ("org.jgroups:jgroups:5.3.1.Final")
+  api ("org.jgroups:jgroups:5.3.6.Final")
 
   implementation ("org.slf4j:slf4j-api:$slf4jVersion")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
 
-  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.10.2")
   testImplementation ("org.slf4j:slf4j-simple:$slf4jVersion")
   testImplementation ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true }
   testImplementation ("org.mockito:mockito-core:$mockitoVersion")
