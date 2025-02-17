@@ -110,7 +110,7 @@ dependencies {
   api ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   api ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
 
-  api ("org.jgroups:jgroups:5.4.1.Final")
+  api ("org.jgroups:jgroups:5.4.3.Final")
 
   implementation ("org.slf4j:slf4j-api:$slf4jVersion")
 
